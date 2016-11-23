@@ -6,6 +6,8 @@
 
 package formcrawl;
 
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 import static org.testng.Assert.*;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
