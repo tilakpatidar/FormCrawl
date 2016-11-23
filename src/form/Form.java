@@ -29,7 +29,7 @@ public class Form {
     private final String url_value;
     private static final Logger LOGGER;
 
-    public static enum HANDLE_TYPES { PLAIN_HTML, SELINIUM};
+    public static enum HANDLE_TYPES { PLAIN_HTML, SELENIUM};
     
     private final Form.HANDLE_TYPES form_choice;
     
@@ -52,8 +52,8 @@ public class Form {
                 this.processHTMLChoice();
         }else if(ordinal == 1){
                 //Selenium processing selected
-                this.form_choice = Form.HANDLE_TYPES.SELINIUM;
-                this.processSeliniumChoice();
+                this.form_choice = Form.HANDLE_TYPES.SELENIUM;
+                this.processSeleniumChoice();
         }else{
                 LOGGER.info("Invalid selection value in form processing type");
                 LOGGER.log(Level.FINEST, "Invalid selection value for form processing type: {0}", ordinal);
@@ -102,7 +102,7 @@ public class Form {
     }
     
     
-    private void processSeliniumChoice() {
+    private void processSeleniumChoice() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     

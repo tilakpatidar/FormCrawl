@@ -86,7 +86,7 @@ public class FormCrawl extends javax.swing.JFrame {
         });
 
         buttonGroup1.add(jRadioButton2);
-        jRadioButton2.setText("Selinium");
+        jRadioButton2.setText("Selenium");
         jRadioButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jRadioButton2ActionPerformed(evt);
@@ -194,7 +194,7 @@ public class FormCrawl extends javax.swing.JFrame {
     private void jRadioButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton2ActionPerformed
         // TODO add your handling code here:
         this.form_choice = 1;
-        LOGGER.info("Selected Selinium env");
+        LOGGER.info("Selected Selenium env");
     }//GEN-LAST:event_jRadioButton2ActionPerformed
 
     /**
