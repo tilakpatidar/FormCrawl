@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 /**
  *
  * @author tilak
@@ -103,7 +105,9 @@ public class Form {
     
     
     private void processSeleniumChoice() {
-        throw new UnsupportedOperationException("Not supported yet.");
+         WebDriver driver  = new ChromeDriver();
+         driver.get(this.url_value);
+         driver.quit();
     }
     
     
