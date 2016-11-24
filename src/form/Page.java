@@ -151,11 +151,22 @@ public class Page {
     private void findForms(){
         
         Elements found_forms = this.soup.body().getElementsByTag("FORM");
-        LOGGER.info("[INFO] Found " + found_forms.size() + " forms in the page");
+        LOGGER.log(Level.INFO, "[INFO] Found {0} forms in the page", found_forms.size());
+        
+        int i = 1;
         for (Element form : found_forms) {
             //create form objects
-            Form f = new Form(this, form);
-            this.forms.add(f);
+            try{
+                LOGGER.log(Level.INFO, "[INFO] creating form {0}", i);
+                Form f = new Form(this, form);
+                this.forms.add(f);
+                
+            }catch(Exception e){
+                LOGGER.log(Level.INFO, "[ERROR] Error in creating form {0}", i);
+            }finally{
+                i++;
+            }
+            
         }
         
     }

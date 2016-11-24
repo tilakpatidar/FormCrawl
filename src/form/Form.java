@@ -6,14 +6,17 @@
 
 package form;
 
+import form.inputs.Text;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  * Represents a form instance with many inputs and actions.
@@ -26,6 +29,7 @@ public class Form {
     private final Page page;
     private final Form.METHODS form_method;
     private final Element form_dom;
+    private ArrayList<Input> form_inputs;
     /**
      * Accepts JSOUP form element
      * @param form_dom - JSOUP form element
@@ -90,10 +94,12 @@ public class Form {
         
         this.page = page;
         this.form_dom = form_dom;
+        this.form_inputs = new ArrayList<Input>();
         
         LOGGER.info("[INFO] Form action and method detected");
         
-        this.createFields();
+        this.detectFields();
+        LOGGER.info(this.toString());
         
     }
     
@@ -106,9 +112,134 @@ public class Form {
     }
     
     
-    private void createFields(){
+    private void detectFields(){
         
+        Elements input_collection = this.form_dom.getElementsByTag("input");
+        Elements select_collection = this.form_dom.getElementsByTag("select");
+        Elements button_collection = this.form_dom.getElementsByTag("button");
+        Elements textarea_collection = this.form_dom.getElementsByTag("textarea");
+        
+        input_collection.addAll(select_collection);
+        input_collection.addAll(button_collection);
+        input_collection.addAll(textarea_collection);
+        
+        for(Element input : input_collection){
+            Input input_obj = this.detectInput(input);
+            this.form_inputs.add(input_obj);
+        }
     }
+    
+     protected Input detectInput(Element ip){
+        String tag_name = ip.tagName();
+        Input inp;
+        switch(tag_name){
+            case "input":
+                String input_type = ip.attr("type").toLowerCase();
+                Input.FIELDTYPES field_type;
+                switch(input_type){
+                    case "text":
+                        field_type = Input.FIELDTYPES.TEXT_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "radio":
+                        field_type = Input.FIELDTYPES.RADIO_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "file":
+                        field_type = Input.FIELDTYPES.FILE_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "checkbox":
+                        field_type = Input.FIELDTYPES.CHECKBOX_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "button":
+                        field_type = Input.FIELDTYPES.BUTTON_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "color":
+                        field_type = Input.FIELDTYPES.COLOR_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "date":
+                        field_type = Input.FIELDTYPES.DATE_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;   
+                    case "email":
+                        field_type = Input.FIELDTYPES.EMAIL_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break; 
+                    case "hidden":
+                        field_type = Input.FIELDTYPES.HIDDEN_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;   
+                    case "image":
+                        field_type = Input.FIELDTYPES.IMAGE_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;  
+                    case "number":
+                        field_type = Input.FIELDTYPES.NUMBER_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break; 
+                    case "password":
+                        field_type = Input.FIELDTYPES.PASSWORD_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break; 
+                    case "reset":
+                        field_type = Input.FIELDTYPES.RESET_BUTTON;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "search":
+                        field_type = Input.FIELDTYPES.SEARCH_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "submit":
+                        field_type = Input.FIELDTYPES.SUBMIT_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "tel":
+                        field_type = Input.FIELDTYPES.TELEPHONE_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "time":
+                        field_type = Input.FIELDTYPES.TIME_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;
+                    case "url":
+                        field_type = Input.FIELDTYPES.URL_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break;         
+                    case "week":
+                        field_type = Input.FIELDTYPES.WEEK_INPUT;
+                        inp = new Text(this, ip, field_type);
+                        break; 
+                    default:
+                      field_type = Input.FIELDTYPES.UNDEFINED_INPUT;
+                      throw new RuntimeException("Undefined input detected");           
+                }
+            break;
+                
+            case "select":
+                field_type = Input.FIELDTYPES.SELECT_INPUT;
+                inp = new Text(this, ip, field_type);
+                break;
+            case "button":
+                field_type = Input.FIELDTYPES.BUTTON_INPUT;
+                inp = new Text(this, ip, field_type);
+                break;
+            case "textarea":
+                field_type = Input.FIELDTYPES.TEXTAREA_INPUT;
+                inp = new Text(this, ip, field_type);
+                break;
+            default:
+                field_type = Input.FIELDTYPES.UNDEFINED_INPUT;
+                inp = new Text(this, ip, field_type);
+                throw new RuntimeException("Undefined input detected");
+        }
+        
+        return inp;
+    }
+    
     
     public String toString(){
         return ReflectionToStringBuilder.toString(this);
