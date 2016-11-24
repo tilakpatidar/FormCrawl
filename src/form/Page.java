@@ -144,7 +144,7 @@ public class Page {
      */
     private void createDOM(){
         this.soup = Jsoup.parse(this.page_source);
-        this.soup.select("script, style, .hidden, noscript, img, iframe, header, footer, br, code, nav").remove();
+        this.soup.select("script, style, head, .hidden, noscript, img, iframe, header, footer, br, code, nav").remove();
     }
 
     

@@ -25,6 +25,7 @@ public class Form {
     private final URL form_action;
     private final Page page;
     private final Form.METHODS form_method;
+    private final Element form_dom;
     /**
      * Accepts JSOUP form element
      * @param form_dom - JSOUP form element
@@ -88,9 +89,11 @@ public class Form {
 
         
         this.page = page;
-       
+        this.form_dom = form_dom;
         
         LOGGER.info("[INFO] Form action and method detected");
+        
+        this.createFields();
         
     }
     
@@ -100,6 +103,11 @@ public class Form {
     private static final Logger LOGGER;
     static{
         LOGGER = Logger.getGlobal();
+    }
+    
+    
+    private void createFields(){
+        
     }
     
     public String toString(){
