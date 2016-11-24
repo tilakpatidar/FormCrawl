@@ -19,7 +19,8 @@ public class Input {
      * Tells us the various types of field types available in the HTML form
      */
     public static enum FIELDTYPES { TEXTAREA_INPUT, TEXT_INPUT, SELECT_INPUT, CHECKBOX_INPUT, RADIO_INPUT,  FILE_INPUT, BUTTON_INPUT, COLOR_INPUT, DATE_INPUT, EMAIL_INPUT, IMAGE_INPUT, NUMBER_INPUT, PASSWORD_INPUT, HIDDEN_INPUT, UNDEFINED_INPUT, RESET_BUTTON, SEARCH_INPUT, TELEPHONE_INPUT, TIME_INPUT, URL_INPUT, WEEK_INPUT, SUBMIT_INPUT };
-    private final Input.FIELDTYPES INPUT_TYPE;
+    protected final Input.FIELDTYPES INPUT_TYPE;
+    protected String input_title;
     private final Form form;
     
     public Input(Form f, Element ip, Input.FIELDTYPES field_type){
