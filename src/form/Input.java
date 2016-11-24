@@ -6,6 +6,8 @@
 
 package form;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+
 /**
  * Super class for all types of inputs.
  * @author tilak
@@ -17,4 +19,7 @@ public class Input {
      */
     public static enum FIELDTYPES { TEXTAREA_INPUT, TEXT_INPUT, SELECT_INPUT, CHECKBOX_INPUT, RADIO_INPUT,  FILE_INPUT };
     
+    public String toString(){
+        return ReflectionToStringBuilder.toString(this);
+    }
 }
