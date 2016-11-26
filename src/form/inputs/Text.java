@@ -15,18 +15,31 @@ import org.jsoup.nodes.Node;
  * Text input implementation
  * @author tilak
  */
-public class Text extends Input implements InputRequirement {
+public class Text extends Input {
+
     private final Element text_input;
-    
+    private final Form form;
+    private final Input.FIELDTYPES INPUT_TYPE;
+    private final String input_title;
+
     public Text(Form f, Element ip, Input.FIELDTYPES field_type) {
-        super(f, ip, field_type);
+        this.INPUT_TYPE = field_type;
         this.text_input = ip;
-        this.getTitle();
+        this.form = f;
+        //extract and set title
+        this.input_title = this.getTitle();
+
+    }
+
+
+    @Override
+    public Form getAssociatedForm(){
+      return this.form;
     }
 
     @Override
     public FIELDTYPES getType() {
-        return super.INPUT_TYPE;
+        return this.INPUT_TYPE;
     }
 
     @Override
@@ -36,9 +49,9 @@ public class Text extends Input implements InputRequirement {
 
     @Override
     public String getTitle() {
-        if(super.input_title == null || super.input_title.isEmpty()){
+        if(this.input_title == null || this.input_title.isEmpty()){
             //extract title
-            
+
             //case 1 : if label is next or prev of input
             Element next = this.text_input.nextElementSibling();
             Element prev = this.text_input.previousElementSibling();
@@ -46,14 +59,14 @@ public class Text extends Input implements InputRequirement {
             System.out.println(next);
             System.out.println(prev);
             if(next.tagName().equals("label")){
-                this.input_title = next.text();
+                return next.text();
             }else if(prev.tagName().equals("label")){
-                this.input_title = prev.text();
+                return prev.text();
             }
-          
+
         }else{
             //return extracted title
-            return super.input_title;
+            return this.input_title;
         }
         return null;
     }
@@ -62,5 +75,5 @@ public class Text extends Input implements InputRequirement {
     public String getCategory() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
 }
