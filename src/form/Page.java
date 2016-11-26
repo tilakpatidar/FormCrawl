@@ -175,7 +175,7 @@ public class Page {
         this.driver.execute_script = "
         setInterval(function(){
           var toRemove=[];
-          toRemove.push.apply(toRemove, document.querySelectorAll('link[type*="css"]'));
+          toRemove.push.apply(toRemove, document.querySelectorAll('link[type*=\"css\"]'));
           toRemove.push.apply(toRemove, document.querySelectorAll('style'));
           toRemove.push.apply(toRemove, document.querySelectorAll('img'));
           toRemove.push.apply(toRemove, document.querySelectorAll('canvas'));
