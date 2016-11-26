@@ -51,7 +51,16 @@ public class Text extends Input {
     public String getTitle() {
         if(this.input_title == null || this.input_title.isEmpty()){
             //extract title
-
+            //case 1 : Try to see if all inputs have their respective different parents, not single parents
+            Element parent = this.text_input.parent();
+            if(Form.detectFields(parent).size() == 1){
+              //it's parent have only one input
+              //now try if it's parent's parent's have multiple inputs
+              if(Form.detectFields(parent.parent()).size() > 1){
+                //yes it has div by div structure
+                return Input.filter_label(parent.text());
+              }
+            }
             //case 1 : if label is next or prev of input
             Element next = this.text_input.nextElementSibling();
             Element prev = this.text_input.previousElementSibling();

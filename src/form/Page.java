@@ -8,6 +8,7 @@ package form;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Scanner;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -17,29 +18,31 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-import java.io.FileReader;
+import org.openqa.selenium.JavascriptExecutor;
 import java.io.File;
 /**
  *
  * @author tilak
  */
-public class Page {
+public final class Page {
 
     /**
      * List of all the forms in the page
      */
-    private ArrayList<Form> forms;
+    private final ArrayList<Form> forms;
     protected final URL url_value;
     private static final Logger LOGGER;
     private String page_source;
     private Document soup;
+    private WebDriver driver;
 
     public static enum HANDLE_TYPES { PLAIN_HTML, SELENIUM};
 
@@ -59,25 +62,31 @@ public class Page {
         this.url_value = new URL(url_value);
         this.forms = new ArrayList<Form>();
 
-        if(ordinal == 0){
-                //Plain HTML selected
-                this.form_choice = Page.HANDLE_TYPES.PLAIN_HTML;
-                this.processHTMLChoice();
-                this.filterHTML();
-                this.createDOM();
-                this.findForms();
-        }else if(ordinal == 1){
-                //Selenium processing selected
-                this.form_choice = Page.HANDLE_TYPES.SELENIUM;
-                this.processSeleniumChoice();
-                this.filterHTML();
-                this.createDOM();
-                this.findForms();
-        }else{
-                LOGGER.info("Invalid selection value in form processing type");
-                LOGGER.log(Level.FINEST, "Invalid selection value for form processing type: {0}", ordinal);
-                throw new RuntimeException("Invalid selection value for form processing type: " +  ordinal);
-        }
+        System.out.println(this.toString());
+	    switch (ordinal) {
+	    	    case 0:
+			    //Plain HTML selected
+			    this.form_choice = Page.HANDLE_TYPES.PLAIN_HTML;
+			    this.processHTMLChoice();
+			    this.filterHTML();
+			    this.createDOM();
+			    this.findForms();
+			    break;
+	    	    case 1:
+			    //Selenium processing selected
+			    
+			    this.form_choice = Page.HANDLE_TYPES.SELENIUM;
+			    this.processSeleniumChoice();
+			    this.removeCSS();
+			    this.filterHTML();
+			    this.createDOM();
+			    this.findForms();
+			    break;
+	    	    default:
+			    LOGGER.info("Invalid selection value in form processing type");
+			    LOGGER.log(Level.FINEST, "Invalid selection value for form processing type: {0}", ordinal);
+			    throw new RuntimeException("Invalid selection value for form processing type: " +  ordinal);
+	    }
 
 
 
@@ -125,6 +134,7 @@ public class Page {
 
     private void processSeleniumChoice() {
          WebDriver driver  = new ChromeDriver();
+         this.driver = driver;
          driver.get(this.url_value.toString());
 
          //wait for 10 seconds before capturing HTML content
@@ -175,24 +185,31 @@ public class Page {
 
     private void removeCSS(){
 
-      String code = "";
+      if(this.form_choice == Page.HANDLE_TYPES.PLAIN_HTML){
+        //if plain html selected do not execute the rest
+        return;
+      }
+
       try{
-        File f = new File("./remove_css.js");
-        FileReader reader = new FileReader(f);
-        BufferedReader buff = new BufferedReader(reader);
-        String line;
-        while((line = buff.readLine()) != null){
-          code += line;
-        }
+        File f = new File("./js_scripts/remove_css.js");
+        String code = new Scanner(f).useDelimiter("\\Z").next();
+        if (this.driver instanceof JavascriptExecutor) {
+          System.out.println("LOL");
+          System.out.println(code);
+      		((JavascriptExecutor) driver)
+      			.executeScript(code);
+      	}
+
       }catch(IOException e){
+        e.printStackTrace();
+        LOGGER.log(Level.FINEST, "[ERROR] Error in reading remove_css.js script {0}", e.getMessage());
         LOGGER.log(Level.INFO, "[ERROR] Error in reading remove_css.js script");
-      }finally{
       }
 
 
     }
     public String toString(){
-        return ReflectionToStringBuilder.toString(this);
+        return ToStringBuilder.reflectionToString(this,ToStringStyle.MULTI_LINE_STYLE);
     }
 
 

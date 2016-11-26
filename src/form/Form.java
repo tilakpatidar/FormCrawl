@@ -14,7 +14,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -23,7 +25,7 @@ import org.jsoup.select.Elements;
  * @author tilak
  */
 public class Form {
-    
+
     private static enum METHODS {GET, POST, PUT, DELETE};
     private final URL form_action;
     private final Page page;
@@ -35,16 +37,16 @@ public class Form {
      * @param form_dom - JSOUP form element
      */
     public Form(Page page, Element form_dom){
-        
+
         LOGGER.info("[INFO] Creating instance of Form");
         //check for type before construction
         if(!form_dom.tagName().equalsIgnoreCase("FORM")){
             LOGGER.info("[ERROR] form_dom must be of tagName type \"form\"");
             throw new RuntimeException("form_dom must be of tagName type \"form\"");
         }
-        
-        
-        
+
+
+
         String method = form_dom.attr("method").toUpperCase();
         switch(method){
             case "GET":
@@ -55,7 +57,7 @@ public class Form {
                 break;
             case "PUT":
                 this.form_method = Form.METHODS.PUT;
-                break;               
+                break;
             case "DELETE":
                 this.form_method = Form.METHODS.DELETE;
                 break;
@@ -63,16 +65,16 @@ public class Form {
                 //no matching method
                 this.form_method = Form.METHODS.GET;
                 //The default method when submitting form data is GET. (from w3schools)
-        
+
         }
-        
+
         try {
             URI form_action = new URI(form_dom.attr("action"));
             if(form_action.toString().isEmpty()){
                 LOGGER.info("[ERROR] No form action url present in form_dom");
                 throw new MalformedURLException("URL empty or null");
             }
-            
+
             if(! form_action.isAbsolute()){
                 //make absolute
                 this.form_action = new URL(page.url_value, form_action.toString());
@@ -88,47 +90,50 @@ public class Form {
             LOGGER.log(Level.FINEST, "[ERROR] {0}", ex.getMessage());
             throw new RuntimeException("Cannot create form object");
         }
-        
-        
 
-        
+
+
+
         this.page = page;
         this.form_dom = form_dom;
         this.form_inputs = new ArrayList<Input>();
-        
+
         LOGGER.info("[INFO] Form action and method detected");
-        
-        this.detectFields();
+
+        Elements input_collection = Form.detectFields(this.form_dom);
+
+        for(Element input : input_collection){
+            Input input_obj = this.detectInput(input);
+            this.form_inputs.add(input_obj);
+        }
+
         LOGGER.info(this.toString());
-        
+
     }
-    
-    
-    
+
+
+
     //for logging in class Form
     private static final Logger LOGGER;
     static{
         LOGGER = Logger.getGlobal();
     }
-    
-    
-    private void detectFields(){
-        
-        Elements input_collection = this.form_dom.getElementsByTag("input");
-        Elements select_collection = this.form_dom.getElementsByTag("select");
-        Elements button_collection = this.form_dom.getElementsByTag("button");
-        Elements textarea_collection = this.form_dom.getElementsByTag("textarea");
-        
+
+
+    public static Elements detectFields(Element form_dom){
+
+        Elements input_collection = form_dom.getElementsByTag("input");
+        Elements select_collection = form_dom.getElementsByTag("select");
+        Elements button_collection = form_dom.getElementsByTag("button");
+        Elements textarea_collection = form_dom.getElementsByTag("textarea");
+
         input_collection.addAll(select_collection);
         input_collection.addAll(button_collection);
         input_collection.addAll(textarea_collection);
-        
-        for(Element input : input_collection){
-            Input input_obj = this.detectInput(input);
-            this.form_inputs.add(input_obj);
-        }
+
+        return input_collection;
     }
-    
+
      protected Input detectInput(Element ip){
         String tag_name = ip.tagName();
         Input inp;
@@ -164,27 +169,27 @@ public class Form {
                     case "date":
                         field_type = Input.FIELDTYPES.DATE_INPUT;
                         inp = new Text(this, ip, field_type);
-                        break;   
+                        break;
                     case "email":
                         field_type = Input.FIELDTYPES.EMAIL_INPUT;
                         inp = new Text(this, ip, field_type);
-                        break; 
+                        break;
                     case "hidden":
                         field_type = Input.FIELDTYPES.HIDDEN_INPUT;
                         inp = new Text(this, ip, field_type);
-                        break;   
+                        break;
                     case "image":
                         field_type = Input.FIELDTYPES.IMAGE_INPUT;
                         inp = new Text(this, ip, field_type);
-                        break;  
+                        break;
                     case "number":
                         field_type = Input.FIELDTYPES.NUMBER_INPUT;
                         inp = new Text(this, ip, field_type);
-                        break; 
+                        break;
                     case "password":
                         field_type = Input.FIELDTYPES.PASSWORD_INPUT;
                         inp = new Text(this, ip, field_type);
-                        break; 
+                        break;
                     case "reset":
                         field_type = Input.FIELDTYPES.RESET_BUTTON;
                         inp = new Text(this, ip, field_type);
@@ -208,17 +213,17 @@ public class Form {
                     case "url":
                         field_type = Input.FIELDTYPES.URL_INPUT;
                         inp = new Text(this, ip, field_type);
-                        break;         
+                        break;
                     case "week":
                         field_type = Input.FIELDTYPES.WEEK_INPUT;
                         inp = new Text(this, ip, field_type);
-                        break; 
+                        break;
                     default:
                       field_type = Input.FIELDTYPES.UNDEFINED_INPUT;
-                      throw new RuntimeException("Undefined input detected");           
+                      throw new RuntimeException("Undefined input detected");
                 }
             break;
-                
+
             case "select":
                 field_type = Input.FIELDTYPES.SELECT_INPUT;
                 inp = new Text(this, ip, field_type);
@@ -236,14 +241,14 @@ public class Form {
                 inp = new Text(this, ip, field_type);
                 throw new RuntimeException("Undefined input detected");
         }
-        
+
         return inp;
     }
-    
-    
+
+
     public String toString(){
-        return ReflectionToStringBuilder.toString(this);
+        return ToStringBuilder.reflectionToString(this,ToStringStyle.MULTI_LINE_STYLE);
     }
 
-    
+
 }

@@ -9,7 +9,9 @@ import form.Page;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  *
@@ -228,7 +230,7 @@ public class FormCrawl extends javax.swing.JFrame {
     }
     
    public String toString(){
-        return ReflectionToStringBuilder.toString(this);
+        return ToStringBuilder.reflectionToString(this,ToStringStyle.MULTI_LINE_STYLE);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

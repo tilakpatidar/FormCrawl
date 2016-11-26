@@ -6,8 +6,8 @@
 
 package form;
 
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
-import org.jsoup.nodes.Element;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * abstract class for all types of inputs.
@@ -47,7 +47,16 @@ public abstract class Input {
      */
     public abstract String getCategory();
 
+    /**
+    * Replaces common label punctuations used in the field title
+    * @return String
+    */
+    public static String filter_label(String text){
+      text = text.replaceAll("\\*|\\:|\\-"," ").replaceAll("(\\n+)|(\\t+)|(\\s+)|(\\r+)", " ").replaceAll("\\s+", " ");
+      return text.trim();
+    }
+
     public String toString(){
-        return ReflectionToStringBuilder.toString(this);
+        return ToStringBuilder.reflectionToString(this,ToStringStyle.MULTI_LINE_STYLE);
     }
 }
