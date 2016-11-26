@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * @author tilak
  */
 public class Page {
-    
+
     /**
      * List of all the forms in the page
      */
@@ -38,11 +38,11 @@ public class Page {
     private static final Logger LOGGER;
     private String page_source;
     private Document soup;
-    
+
     public static enum HANDLE_TYPES { PLAIN_HTML, SELENIUM};
-    
+
     private final Page.HANDLE_TYPES form_choice;
-    
+
     /**
      * HashMap to categorize the various Input types
      */
@@ -56,7 +56,7 @@ public class Page {
     public Page(String url_value, int ordinal) throws Exception{
         this.url_value = new URL(url_value);
         this.forms = new ArrayList<Form>();
-        
+
         if(ordinal == 0){
                 //Plain HTML selected
                 this.form_choice = Page.HANDLE_TYPES.PLAIN_HTML;
@@ -76,18 +76,18 @@ public class Page {
                 LOGGER.log(Level.FINEST, "Invalid selection value for form processing type: {0}", ordinal);
                 throw new RuntimeException("Invalid selection value for form processing type: " +  ordinal);
         }
-        
-        
-        
-        
+
+
+
+
     }
-    
+
     static{
         LOGGER = Logger.getGlobal();
     }
-    
+
     private void processHTMLChoice(){
-        
+
         try{
             URLConnection uc = this.url_value.openConnection();
             InputStream ip = uc.getInputStream();
@@ -100,46 +100,46 @@ public class Page {
                 }
                 this.page_source = a.toString();
                 LOGGER.log(Level.INFO, "Web page read {0} chars", a.length());
-                
+
             }catch(Exception e){
                 LOGGER.info("Error in reading web page");
                 LOGGER.log(Level.FINEST, "[ERROR] {0}", e.getMessage());
             }
-           
+
         }catch(MalformedURLException e){
             LOGGER.info("[ERROR] URL error");
             LOGGER.log(Level.FINEST, "[ERROR] {0}", e.getMessage());
-            
+
         }catch (IOException e) {
             LOGGER.info("[ERROR] Download error");
             LOGGER.log(Level.FINEST, "[ERROR] {0}", e.getMessage());
         }finally{
-            
-            
+
+
         }
-        
+
     }
-    
-    
+
+
     private void processSeleniumChoice() {
          WebDriver driver  = new ChromeDriver();
          driver.get(this.url_value.toString());
-         
+
          //wait for 10 seconds before capturing HTML content
          driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
          this.page_source = driver.getPageSource();
-         
+
     }
     /**
      * Filters the HTML content.
-     * 
+     *
      */
     private void filterHTML(){
         this.page_source = this.page_source.trim().replaceAll("(\\n+)|(\\t+)|(\\s+)|(\\r+)", " ").replaceAll("\\s+", " ");
     }
-    
+
     /**
-     * 
+     *
      * Creates and filter HTML DOM elements.
      */
     private void createDOM(){
@@ -147,12 +147,12 @@ public class Page {
         this.soup.select("script, style, head, .hidden, noscript, img, iframe, header, footer, br, code, nav").remove();
     }
 
-    
+
     private void findForms(){
-        
+
         Elements found_forms = this.soup.body().getElementsByTag("FORM");
         LOGGER.log(Level.INFO, "[INFO] Found {0} forms in the page", found_forms.size());
-        
+
         int i = 1;
         for (Element form : found_forms) {
             //create form objects
@@ -160,20 +160,83 @@ public class Page {
                 LOGGER.log(Level.INFO, "[INFO] creating form {0}", i);
                 Form f = new Form(this, form);
                 this.forms.add(f);
-                
+
             }catch(Exception e){
                 LOGGER.log(Level.INFO, "[ERROR] Error in creating form {0}", i);
             }finally{
                 i++;
             }
-            
+
         }
-        
+
     }
-    
+
+    private void removeCSS(){
+        this.driver.execute_script = "
+        setInterval(function(){
+          var toRemove=[];
+          toRemove.push.apply(toRemove, document.querySelectorAll('link[type*="css"]'));
+          toRemove.push.apply(toRemove, document.querySelectorAll('style'));
+          toRemove.push.apply(toRemove, document.querySelectorAll('img'));
+          toRemove.push.apply(toRemove, document.querySelectorAll('canvas'));
+          toRemove.forEach(function(s){
+            s.parentNode.removeChild(s);
+          });
+
+          [].forEach.call(document.querySelectorAll('[style]'), function(e){
+
+            e.removeAttribute('style');
+          });
+
+          var stylesheets = document.styleSheets;
+          var len = stylesheets.length;
+          while(len!=0){
+            var sh = stylesheets[len - 1];
+
+            var count = sh.rules.length;
+
+            while(count!=0)  {
+              sh.deleteRule(0);
+              count = sh.rules.length;
+            }
+            len--;
+          }
+
+          var km = ['click', 'dblclick', 'mousedown', 'mousemove', 'mouseover', 'mouseout', 'mouseup', 'mouseenter', 'mouseleave', 'keydown', 'keypress', 'keyup', 'scroll'];
+          function preventAll(parent){
+            var dom = parent.getElementsByTagName('*');
+            for(var i=0,l=dom.length; i<l; i++){
+              for(var n=0,c=km.length; n<c; n++){
+                dom[i]['on'+km[n]] = function(e){
+                  e = e || event;
+                  e.preventDefault();
+                  return false;
+                }
+              }
+            }
+            var fr = frames;
+            for(var i=0,l=fr.length; i<l; i++){
+              // cancell frames events here
+            }
+          }
+          preventAll(document);
+
+
+          for(var n=0,c=km.length; n<c; n++){
+            window['on'+km[n]] = function(e){
+              e = e || event;
+              e.preventDefault();
+              return false;
+            }
+          }
+
+        }, 1000);
+      ";
+
+    }
     public String toString(){
         return ReflectionToStringBuilder.toString(this);
     }
-    
-    
+
+
 }
