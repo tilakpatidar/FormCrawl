@@ -5,14 +5,14 @@
  */
 package form;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
-import org.openqa.selenium.WebDriver;
 
 /**
  * abstract class for all types of inputs.
@@ -27,6 +27,20 @@ public abstract class Input {
 	 */
 	public static enum FIELDTYPES {
 		TEXTAREA_INPUT, TEXT_INPUT, SELECT_INPUT, CHECKBOX_INPUT, RADIO_INPUT, FILE_INPUT, BUTTON_INPUT, COLOR_INPUT, DATE_INPUT, EMAIL_INPUT, IMAGE_INPUT, NUMBER_INPUT, PASSWORD_INPUT, HIDDEN_INPUT, UNDEFINED_INPUT, RESET_BUTTON, SEARCH_INPUT, TELEPHONE_INPUT, TIME_INPUT, URL_INPUT, WEEK_INPUT, SUBMIT_INPUT
+	};
+
+	private static final String TOP_LABEL_IMAGE = "./img/top.png";
+	private static final String LEFT_LABEL_IMAGE = "./img/left.png";
+	
+	public static final List<String> VALID_INPUT_TAGS;
+	
+	static{
+		String[] a = {"input", "textarea", "select", "button" };
+		VALID_INPUT_TAGS = Arrays.asList(a);
+	}
+
+	public static enum ORIENTATIONS {
+		LABEL_TOP, LABEL_LEFT, LABEL_RIGHT
 	};
 
 	public abstract Form getAssociatedForm();
@@ -78,40 +92,43 @@ public abstract class Input {
 	 * @return
 	 */
 	public static String findLabel(Input input) {
-		
+
 		Form f = input.getAssociatedForm();
-		
-		switch(Form.ORIENTATIONS.HTML_LAYOUT_TREE){
-			case HTML_LAYOUT_TREE:
-				Element parent = input.getElement().parent();
-				if (Form.detectFields(parent).size() == 1) {
-					//it's parent have only one input
-					//now try if it's parent's parent's have multiple inputs
-					if (Form.detectFields(parent.parent()).size() > 1) {
-						//yes it has div by div structure
-						return Input.filter_label(parent.text());
-					}
-				}
-			break;
-			
-			case MULTIPLE_LABELS_SPAN:
-				Element next = input.getElement().nextElementSibling();
-				Element prev = input.getElement().previousElementSibling();
-				if (next.tagName().equals("label") || next.tagName().equals("span")) {
-					return Input.filter_label(next.text());
-				} else if (prev.tagName().equals("label") || prev.tagName().equals("span")) {
-					return Input.filter_label(prev.text());
-				}
-				break;
-			default:
-				return "NO LABEL";
-		}
 		return null;
-		
+
 	}
 
-	
-	
+	public static Input.ORIENTATIONS detectOrientation(Input inp) throws IOException {
+
+		System.out.println("HEY");
+		//case 1 top label
+		String file_name = inp.getAssociatedForm().getAssociatedPage().getTopLabelFieldScreenshot(inp);
+		LOGGER.log(Level.INFO, "nodejs ./js_scripts/diff.js " + file_name + " " + Input.TOP_LABEL_IMAGE);
+		String output = Input.execCmd("nodejs ./js_scripts/diff.js " + file_name + " " + Input.TOP_LABEL_IMAGE);
+
+		output = output.replaceAll("(\\n+)|(\\t+)|(\\s+)|(\\r+)", " ").replaceAll("\\s+", " ").trim();
+		System.out.println(output);
+		Double diff = Double.parseDouble(output);
+		int diff_per = diff.intValue();
+		if (diff_per < 10) {
+			//yes label is on top
+			return Input.ORIENTATIONS.LABEL_TOP;
+		} else {
+			return Input.ORIENTATIONS.LABEL_LEFT;
+		}
+
+		//throw new java.io.IOException("Unable to detect any input orientation");
+	}
+
+	private static String execCmd(String cmd) throws java.io.IOException {
+		java.util.Scanner s = new java.util.Scanner(Runtime.getRuntime().exec(cmd).getInputStream()).useDelimiter("\\A");
+		if (s.hasNext()) {
+			return s.next();
+		} else {
+			throw new java.io.IOException("output of execCmd is empty string\nCheck your js script");
+		}
+	}
+
 	/**
 	 *
 	 * For getting the category of the input for suggestion engine
@@ -149,10 +166,13 @@ public abstract class Input {
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 	}
-	
+
+	public abstract Input.ORIENTATIONS getOrientation();
+
 	//for logging
 	private static final Logger LOGGER;
-	static{
+
+	static {
 		LOGGER = Logger.getGlobal();
 	}
 }

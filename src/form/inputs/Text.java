@@ -7,6 +7,7 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
+import java.io.IOException;
 import org.jsoup.nodes.Element;
 
 /**
@@ -21,14 +22,16 @@ public class Text extends Input {
 	private final Input.FIELDTYPES INPUT_TYPE;
 	private final String input_title;
 	private final String placeholder;
+	private Input.ORIENTATIONS input_orientation;
 
-	public Text(Form f, Element ip, Input.FIELDTYPES field_type) {
+	public Text(Form f, Element ip, Input.FIELDTYPES field_type) throws IOException {
 		this.INPUT_TYPE = field_type;
 		this.text_input = ip;
 		this.form = f;
 		this.input_title = Input.findLabel(this);
 		this.placeholder = Input.findPlaceHolder(this);
-		
+		//detect input_orientation
+		this.input_orientation = Input.detectOrientation(this);
 
 	}
 
@@ -65,6 +68,11 @@ public class Text extends Input {
 	@Override
 	public String getPlaceHolder() {
 		return this.placeholder;
+	}
+
+	@Override
+	public ORIENTATIONS getOrientation() {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
 }

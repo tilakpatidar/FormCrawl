@@ -55,12 +55,6 @@ public final class Page {
 
 	
 
-	public static enum HANDLE_TYPES {
-		PLAIN_HTML, SELENIUM
-	};
-
-	private final Page.HANDLE_TYPES form_choice;
-
 	/**
 	 * HashMap to categorize the various Input types
 	 */
@@ -70,38 +64,19 @@ public final class Page {
 	 * Constructor to initiate form processing
 	 *
 	 * @param url_value - The string representation web page's url
-	 * @param ordinal - Index of enum HANDLE_TYPES
 	 * @throws Exception - Multiple exceptions can be anticipated
 	 */
-	public Page(String url_value, int ordinal) throws Exception {
+	public Page(String url_value) throws Exception {
 		this.url_value = new URL(url_value);
 		this.forms = new ArrayList<Form>();
 
 		System.out.println(this.toString());
-		switch (ordinal) {
-			case 0:
-				//Plain HTML selected
-				this.form_choice = Page.HANDLE_TYPES.PLAIN_HTML;
-				this.processHTMLChoice();
-				this.filterHTML();
-				this.createDOM();
-				this.findForms();
-				break;
-			case 1:
-				//Selenium processing selected
 
-				this.form_choice = Page.HANDLE_TYPES.SELENIUM;
-				this.processSeleniumChoice();
-				this.removeCSS();
-				this.filterHTML();
-				this.createDOM();
-				this.findForms();
-				break;
-			default:
-				LOGGER.info("Invalid selection value in form processing type");
-				LOGGER.log(Level.FINEST, "Invalid selection value for form processing type: {0}", ordinal);
-				throw new RuntimeException("Invalid selection value for form processing type: " + ordinal);
-		}
+		this.processSeleniumChoice();
+		this.removeCSS();
+		this.filterHTML();
+		this.createDOM();
+		this.findForms();
 
 	}
 
@@ -195,10 +170,6 @@ public final class Page {
 
 	private void removeCSS() {
 
-		if (this.form_choice == Page.HANDLE_TYPES.PLAIN_HTML) {
-			//if plain html selected do not execute the rest
-			return;
-		}
 
 		try {
 			File f = new File("./js_scripts/remove_css.js");
@@ -223,70 +194,87 @@ public final class Page {
 
 	/**
 	 * Captures screenshot of element
+	 *
 	 * @param e
 	 * @return
 	 */
-	private String getElementScreenShot(Element e, int x, int y , int w, int h) throws IOException {
-		
-		
+	private String getElementScreenShot(Element e, int x, int y, int w, int h) throws IOException {
+
 		File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-		
+
 		//System.out.println(point.getX() + "  " + point.getY());
 		int xcord = x;
 		int ycord = y;
 		//System.out.println(xcord + "  " + ycord);
 		BufferedImage img = ImageIO.read(screen);
-		BufferedImage dest = img.getSubimage(x , y + 2, w, h); //-2 to adjust black borders
+		BufferedImage dest = img.getSubimage(x, y + 2, w, h); //-2 to adjust black borders
 		ImageIO.write(dest, "png", screen);
-		String random_name = "./screenshots/" + "screen" + e.hashCode() + " " +  (int) (Math.random() * 1000) + ".png";
-		FileUtils.copyFile(screen, new File( random_name ));
+		String random_name = "./screenshots/" + "screen" + e.hashCode() + "" + (int) (Math.random() * 1000) + ".png";
+		FileUtils.copyFile(screen, new File(random_name));
 		//System.out.println(random_name);
 		return random_name;
 
 	}
-	
+
 	public String getTopLabelScreenshot(Input inp) throws IOException {
 		Element input = inp.getElement();
-		
+
 		WebElement element = this.driver.findElement(By.cssSelector(input.cssSelector()));
 		int ImageWidth = element.getSize().getWidth();
-		int ImageHeight = element.getSize().getHeight(); 
-		
-		int x, y, w, h;
-		
-		WebElement upInput = this.driver.findElement(By.cssSelector(input.cssSelector()));
+		int ImageHeight = element.getSize().getHeight();
 
-		Point up = upInput.getLocation();
+		int x, y, w, h;
+
+		Point up = element.getLocation();
 		//System.out.println("up y " + up.getY());
 		//System.out.println("low y " + element.getLocation().getY());
-		y =  element.getLocation().getY() - 45; //font size is 32 px default
+		y = element.getLocation().getY() - 50; //font size is 32 px default
 		x = up.getX();
-		w = upInput.getSize().getWidth();
-		h = 40;
-		
-		
-		System.out.println(x + "   " + y + "  " + w +  "  " + h);
-		return this.getElementScreenShot(input, x, y , w, h);
+		w = element.getSize().getWidth();
+		h = 45;
+
+		System.out.println(x + "   " + y + "  " + w + "  " + h);
+		return this.getElementScreenShot(input, x, y, w, h);
 	}
-	
+
 	/**
-	public String getLeftLabelScreenshot(Element input) throws IOException {
+	 *
+	 * @param inp
+	 * @return
+	 */
+	public String getTopLabelFieldScreenshot(Input inp) throws IOException {
+		Element input = inp.getElement();
+
 		WebElement element = this.driver.findElement(By.cssSelector(input.cssSelector()));
 		int ImageWidth = element.getSize().getWidth();
-		int ImageHeight = element.getSize().getHeight(); 
-		return this.getElementScreenShot(input, element, -1 * ImageWidth, 0);
+		int ImageHeight = element.getSize().getHeight();
+
+		int x, y, w, h;
+
+		Point up = element.getLocation();
+		//System.out.println("up y " + up.getY());
+		//System.out.println("low y " + element.getLocation().getY());
+		y = element.getLocation().getY() - 55; //font size is 32 px default
+		x = up.getX() - 5;
+		w = element.getSize().getWidth() + 10;
+		h = 95;
+
+		System.out.println(x + "   " + y + "  " + w + "  " + h);
+		return this.getElementScreenShot(input, x, y, w, h);
+
 	}
-	
-	public String getFieldScreenshot(Element input) throws IOException{
-		//System.out.println(input.cssSelector());
-		WebElement element = this.driver.findElement(By.cssSelector(input.cssSelector()));
-		int ImageWidth = element.getSize().getWidth();
-		int ImageHeight = element.getSize().getHeight(); 
-		//System.out.println((-1 * ImageWidth) + "   "  + ImageHeight);
-		return this.getElementScreenShot(input, element, -1 * ImageWidth, ImageHeight);
-		
-	}
-**/
+
+	/**
+	 * public String getLeftLabelScreenshot(Element input) throws
+	 * IOException { WebElement element =
+	 * this.driver.findElement(By.cssSelector(input.cssSelector())); Point
+	 * em = element.getLocation(); int x, y, w, h;
+	 *
+	 * x =
+	 * return this.getElementScreenShot(input, element, -1 * ImageWidth, 0);
+	 * }
+	*
+	 */
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 	}

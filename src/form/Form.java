@@ -19,8 +19,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 
 /**
  * Represents a form instance with many inputs and actions.
@@ -29,18 +27,13 @@ import org.openqa.selenium.WebElement;
  */
 public class Form {
 
-	
-
 	public static enum METHODS {
 		GET, POST, PUT, DELETE
 	};
 
-	public static enum ORIENTATIONS {
-		LABEL_TOP, LABEL_LEFT, HTML_LAYOUT_TREE, MULTIPLE_LABELS_SPAN
-	};
 	private final URL form_action;
 	private final Page page;
-	private Form.ORIENTATIONS form_orientation;
+
 	private final Form.METHODS form_method;
 	private final Element form_dom;
 	private ArrayList<Input> form_inputs;
@@ -48,104 +41,41 @@ public class Form {
 	/**
 	 * Accepts JSOUP form element
 	 *
+	 * @param page
 	 * @param form_dom - JSOUP form element
 	 */
 	public Form(Page page, Element form_dom) {
 
-		LOGGER.info("[INFO] Creating instance of Form");
-		//check for type before construction
-		if (!form_dom.tagName().equalsIgnoreCase("FORM")) {
-			LOGGER.info("[ERROR] form_dom must be of tagName type \"form\"");
-			throw new RuntimeException("form_dom must be of tagName type \"form\"");
-		}
+		LOGGER.info("[START] Creating instance of Form");
+		this.checkValidFormDom(form_dom);
 
-		String method = form_dom.attr("method").toUpperCase();
-		switch (method) {
-			case "GET":
-				this.form_method = Form.METHODS.GET;
-				break;
-			case "POST":
-				this.form_method = Form.METHODS.POST;
-				break;
-			case "PUT":
-				this.form_method = Form.METHODS.PUT;
-				break;
-			case "DELETE":
-				this.form_method = Form.METHODS.DELETE;
-				break;
-			default:
-				//no matching method
-				this.form_method = Form.METHODS.GET;
-			//The default method when submitting form data is GET. (from w3schools)
-
-		}
-
-		try {
-			URI form_action = new URI(form_dom.attr("action"));
-			if (form_action.toString().isEmpty()) {
-				LOGGER.info("[ERROR] No form action url present in form_dom");
-				throw new MalformedURLException("URL empty or null");
-			}
-
-			if (!form_action.isAbsolute()) {
-				//make absolute
-				this.form_action = new URL(page.url_value, form_action.toString());
-			} else {
-				this.form_action = form_action.toURL();
-			}
-		} catch (MalformedURLException ex) {
-			LOGGER.info("[ERROR] FORM action URL malformed");
-			LOGGER.log(Level.FINEST, "[ERROR] {0}", ex.getMessage());
-			throw new RuntimeException("Cannot create form object");
-		} catch (URISyntaxException ex) {
-			LOGGER.info("[ERROR] FORM action URI cast malformed");
-			LOGGER.log(Level.FINEST, "[ERROR] {0}", ex.getMessage());
-			throw new RuntimeException("Cannot create form object");
-		}
-
-		
-		
 		this.page = page;
 		this.form_dom = form_dom;
-		this.form_inputs = new ArrayList<Input>();
-		
-		//detect form_orientation
-		System.out.println("LL5");
-		try{
-			this.form_orientation = this.detectOrientation();
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		
-System.out.println("LL55");
-		LOGGER.info("[INFO] Form action and method detected");
+		this.form_method = this.extractFormMethod();
+		this.form_action = this.extractFormAction();
 
-		Elements input_collection = Form.getInputElements(Form.detectFields(this.form_dom));
-System.out.println("LL5555");
+		LOGGER.log(Level.INFO, "[DONE] Form action and method detected");
+
+		Elements input_collection = Form.detectFields(this.form_dom);
+		this.form_inputs = new ArrayList<Input>();
+
+		LOGGER.log(Level.INFO, "[DONE] Found {0} inputs", input_collection.size());
+
+		int count = 1;
 		for (Element input : input_collection) {
 			try {
-			Input input_obj = this.detectInput(input);
-			this.form_inputs.add(input_obj);
-			}catch(Exception e){
+				LOGGER.log(Level.INFO, "[START] Create Input instance {0}", count);
+				Input input_obj = this.detectInput(input);
+				this.form_inputs.add(input_obj);
+				LOGGER.log(Level.INFO, "[DONE] Created Input instance {0}", count);
+			} catch (Exception e) {
+				LOGGER.log(Level.INFO, "[FAIL] Create Input instance {0}", count);
 				e.printStackTrace();
 			}
+			count += 1;
 		}
-		LOGGER.log(Level.INFO, "[INFO] Created {0}Input objects", form_inputs.size());
-		System.out.println("LL515");
-		
-		try {
-			System.out.println("LL");
-			this.page.getTopLabelScreenshot(form_inputs.get(0));
-			System.out.println("LL2");
-			this.page.getTopLabelScreenshot(form_inputs.get(1));
-			this.page.getTopLabelScreenshot(form_inputs.get(2));
-		} catch (IOException ex) {
-			ex.printStackTrace();
-			LOGGER.log(Level.FINEST, null, ex);
-		}catch (Exception e){
-			
-			e.printStackTrace();
-		}
+		LOGGER.log(Level.INFO, "[DONE] Created {0} Input objects", form_inputs.size());
+		//System.out.println("LL515");
 
 		LOGGER.info(this.toString());
 
@@ -158,21 +88,94 @@ System.out.println("LL5555");
 		LOGGER = Logger.getGlobal();
 	}
 
-	public static Elements detectFields(Element form_dom) {
-
-		Elements input_collection = form_dom.getElementsByTag("input");
-		Elements select_collection = form_dom.getElementsByTag("select");
-		Elements button_collection = form_dom.getElementsByTag("button");
-		Elements textarea_collection = form_dom.getElementsByTag("textarea");
-
-		input_collection.addAll(select_collection);
-		input_collection.addAll(button_collection);
-		input_collection.addAll(textarea_collection);
-
-		return input_collection;
+	private void checkValidFormDom(Element form_dom) {
+		//check for type before construction
+		if (!form_dom.tagName().equalsIgnoreCase("FORM")) {
+			LOGGER.info("[ERROR] form_dom must be of tagName type \"form\"");
+			LOGGER.log(Level.INFO, "[FAIL] Creating instance of Form failed");
+			throw new IllegalArgumentException("form_dom must be of tagName type \"form\"");
+		}
 	}
 
-	protected Input detectInput(Element ip) {
+	/**
+	 * Extracts and returns form method
+	 *
+	 * @return
+	 */
+	private Form.METHODS extractFormMethod() {
+		String method = this.form_dom.attr("method").toUpperCase();
+
+		LOGGER.log(Level.INFO, "[INFO] Form method type {0}", method);
+
+		switch (method) {
+			case "GET":
+				return Form.METHODS.GET;
+			case "POST":
+				return Form.METHODS.POST;
+			case "PUT":
+				return Form.METHODS.PUT;
+			case "DELETE":
+				return Form.METHODS.DELETE;
+			default:
+				//no matching method
+				return Form.METHODS.GET;
+			//The default method when submitting form data is GET. (from w3schools)
+
+		}
+	}
+
+	/**
+	 * Extract and returns form action
+	 *
+	 * @return
+	 */
+	private URL extractFormAction() {
+		try {
+			URI orig_form_url = new URI(this.form_dom.attr("action"));
+
+			if (orig_form_url.toString().isEmpty()) {
+				LOGGER.log(Level.INFO, "[ERROR] No form action url present in form_dom");
+				throw new MalformedURLException("URL empty or null");
+			}
+
+			if (!orig_form_url.isAbsolute()) {
+				//make absolute
+				return new URL(page.url_value, orig_form_url.toString());
+			} else {
+				return orig_form_url.toURL();
+			}
+		} catch (MalformedURLException ex) {
+			LOGGER.log(Level.INFO, "[ERROR] FORM action URL malformed {0}", ex.getMessage());
+			LOGGER.log(Level.FINEST, "[ERROR] {0}", ex.getMessage());
+			throw new RuntimeException("Cannot create form object");
+		} catch (URISyntaxException ex) {
+			LOGGER.log(Level.INFO, "[ERROR] FORM action URI cast malformed {0}", ex.getMessage());
+			LOGGER.log(Level.FINEST, "[ERROR] {0}", ex.getMessage());
+			throw new RuntimeException("Cannot create form object");
+		}
+	}
+
+	public static Elements detectFields(Element form_dom) {
+
+		Elements input_collection = new Elements();
+		for (String tag : Input.VALID_INPUT_TAGS) {
+			input_collection.addAll(form_dom.getElementsByTag(tag));
+		}
+
+		Elements form_elements = new Elements();
+
+		for (Element e : input_collection) {
+
+			//not hidden element and element is part of valid input tags 
+			if (!e.attr("type").toLowerCase().equals("hidden") && Input.VALID_INPUT_TAGS.contains(e.tagName())) {
+				form_elements.add(e);
+			}
+
+		}
+		return form_elements;
+	}
+
+	protected Input detectInput(Element ip) throws IOException {
 		String tag_name = ip.tagName();
 		Input inp;
 		switch (tag_name) {
@@ -287,71 +290,8 @@ System.out.println("LL5555");
 		return this.page;
 	}
 
-	public Form.ORIENTATIONS getOrientation() {
-		return this.form_orientation;
-	}
-
-	private Form.ORIENTATIONS detectOrientation() {
-		//take any first input
-		Element input = this.form_dom.getElementsByTag("input").first();
-		Element parent = input.parent();
-		System.out.println("HEYYE78");
-		if (Form.detectFields(parent).size() == 1) {
-			//it's parent have only one input
-			//now try if it's parent's parent's have multiple inputs
-			if (Form.detectFields(parent.parent()).size() > 1) {
-				//yes it has div by div structure
-				return Form.ORIENTATIONS.HTML_LAYOUT_TREE;
-			}
-		} else {
-			System.out.println("HEYYefE");
-			//case 1 : if label is next or prev of input
-			Element next = input.nextElementSibling();
-			Element prev = input.previousElementSibling();
-			if (next != null && (next.tagName().equals("label") || next.tagName().equals("span")) ) {
-				return Form.ORIENTATIONS.MULTIPLE_LABELS_SPAN;
-			} else if (prev != null && (prev.tagName().equals("label") || prev.tagName().equals("span") )) {
-				return Form.ORIENTATIONS.MULTIPLE_LABELS_SPAN;
-			} else {
-				System.out.println("HEYYE");
-				try {
-					//try for image comparision
-					//try for label at top and input below
-					System.out.println("LLAL1");
-					//this.page.getFieldScreenshot(input);
-					
-				}catch(Exception e){
-					e.printStackTrace();
-				}
-			}
-		}
-		return Form.ORIENTATIONS.HTML_LAYOUT_TREE;
-	}
-	
-	public Element getElement(){
+	public Element getElement() {
 		return this.form_dom;
-	}
-	
-	/**
-	 * Takes an array list of Element and returns only form input elements within it.
-	 * @param children
-	 * @return 
-	 */
-	public static Elements getInputElements(Elements children) {
-		ArrayList<String> inputs = new ArrayList<String>();
-		inputs.add("input");
-		inputs.add("select");
-		inputs.add("textarea");
-		
-		Elements form_elements = new Elements();
-		for(Element e : children){
-			
-			if( !e.attr("type").toLowerCase().equals("hidden") && inputs.indexOf(e.tagName()) >= 0 ){
-				form_elements.add(e);
-			}
-			
-		}
-		return form_elements;
 	}
 
 	public String toString() {
