@@ -1,4 +1,18 @@
 
+var css = '*{ margin-left: 0 !important; font-size: 32px !important; margin-top: 0 !important; -webkit-margin-after: 2px !important;}',
+    head = document.head || document.getElementsByTagName('head')[0],
+    style = document.createElement('style');
+    style.setAttribute("name", "hacked_css_123");
+
+    style.type = 'text/css';
+    if (style.styleSheet){
+      style.styleSheet.cssText = css;
+    } else {
+      style.appendChild(document.createTextNode(css));
+    }
+
+    head.appendChild(style);
+
 setInterval(function(){
   var toRemove=[];
   toRemove.push.apply(toRemove, document.querySelectorAll('link[type*="css"]'));
@@ -6,11 +20,16 @@ setInterval(function(){
   toRemove.push.apply(toRemove, document.querySelectorAll('img'));
   toRemove.push.apply(toRemove, document.querySelectorAll('canvas'));
   toRemove.forEach(function(s){
-    s.parentNode.removeChild(s);
+      
+      if(s.getAttribute("name") !== "hacked_css_123"){
+          console.log(s.getAttribute('name'));
+          s.parentNode.removeChild(s);
+      }
+    
   });
 
   [].forEach.call(document.querySelectorAll('[style]'), function(e){
-
+      
     e.removeAttribute('style');
   });
 
@@ -18,6 +37,10 @@ setInterval(function(){
   var len = stylesheets.length;
   while(len!=0){
     var sh = stylesheets[len - 1];
+    if(sh.ownerNode.getAttribute("name") == "hacked_css_123"){
+        len --;
+        continue;
+    }
 
     var count = sh.rules.length;
 

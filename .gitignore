@@ -1,7 +1,7 @@
 dist/
 build/
 *.class
-
+screenshots/
 #general swap/backup files
 *.so
 *.log*
