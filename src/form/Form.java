@@ -14,8 +14,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -37,6 +37,7 @@ public class Form {
 	private final Form.METHODS form_method;
 	private final Element form_dom;
 	private ArrayList<Input> form_inputs;
+	private final String[] form_tokens;
 
 	/**
 	 * Accepts JSOUP form element
@@ -48,11 +49,26 @@ public class Form {
 
 		LOGGER.info("[START] Creating instance of Form");
 		this.checkValidFormDom(form_dom);
-
+		
+	
+		
 		this.page = page;
 		this.form_dom = form_dom;
 		this.form_method = this.extractFormMethod();
 		this.form_action = this.extractFormAction();
+		
+			
+		String form_text = Input.filter_label(this.form_dom.text());
+		String[] keywords = StringUtils.splitPreserveAllTokens(form_text);
+		
+		int index = 0;
+		for(String keyword : keywords){
+			//System.out.println(keyword);
+			keywords[index] = Input.filter_label(keyword);
+			index++;
+		}
+		
+		this.form_tokens = keywords;
 
 		LOGGER.log(Level.INFO, "[DONE] Form action and method detected");
 
@@ -86,6 +102,10 @@ public class Form {
 
 	static {
 		LOGGER = Logger.getGlobal();
+	}
+	
+	public String[] getFormTokens(){
+		return this.form_tokens;
 	}
 
 	private void checkValidFormDom(Element form_dom) {

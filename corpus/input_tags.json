@@ -1,0 +1,19 @@
+[
+    ["email", "email address", "email id", "e-mail address", "e-mail"],
+    ["job search"],
+    ["name", "first name", "last name", "nickname"],
+    ["age"],
+    ["date of birth", "dob", "birth date", "birthday"],
+    ["sex", "gender"],
+    ["feedback", "description"],
+    ["password", "confirm password", "new password", "old password", "choose a password", "create a password"],
+    ["state"],
+    ["city", "town", "place"],
+    ["nationality"],
+    ["country", "nation"],
+    
+
+]
+
+
+EMAIL, JOB_SEARCH, NAME, AGE, DOB, GENDER, DESC, PASSWORD, STATE, CITY, NATIONALITY, COUNTRY, MOBILE, TELEPHONE, ADDRESS, PIN_CODE, USERNAME, COMPANY, COLLEGE, DEPARTMENT, FAX, T_AND_C

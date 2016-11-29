@@ -199,6 +199,13 @@ public final class Page {
 	 * @return
 	 */
 	private String getElementScreenShot(Element e, int x, int y, int w, int h) throws IOException {
+		if(x < 0){
+			x = 0;
+		}
+		
+		if(y < 0){
+			y = 0;
+		}
 
 		File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 
@@ -264,17 +271,30 @@ public final class Page {
 
 	}
 
-	/**
-	 * public String getLeftLabelScreenshot(Element input) throws
-	 * IOException { WebElement element =
-	 * this.driver.findElement(By.cssSelector(input.cssSelector())); Point
-	 * em = element.getLocation(); int x, y, w, h;
-	 *
-	 * x =
-	 * return this.getElementScreenShot(input, element, -1 * ImageWidth, 0);
-	 * }
-	*
-	 */
+	 public String getLeftLabelScreenshot(Input inp) throws IOException {
+		 
+		 Element input = inp.getElement();
+
+		WebElement element = this.driver.findElement(By.cssSelector(input.cssSelector()));
+		WebElement form_element = this.driver.findElement(By.cssSelector(inp.getAssociatedForm().getElement().cssSelector()));
+		int x, y, w, h;
+
+		//System.out.println("up y " + up.getY());
+		//System.out.println("low y " + element.getLocation().getY());
+		y = element.getLocation().getY() - 5; //font size is 32 px default
+		int diff = element.getLocation().getX() - form_element.getLocation().getX();
+		x = form_element.getLocation().getX();
+		w = diff;
+		h = element.getSize().getHeight() + 10;
+
+		//System.out.println(x + "   " + y + "  " + w + "  " + h);
+		return this.getElementScreenShot(input, x, y, w, h);
+		
+	  }
+	 
+	 
+	
+	
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 	}
