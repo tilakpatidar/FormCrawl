@@ -5,6 +5,7 @@
  */
 package form;
 
+import form.ml.InputClassifier;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -22,47 +23,117 @@ import org.jsoup.nodes.Element;
  */
 public abstract class Input {
 
-	
+	private final Element input;
+	private final Form form;
+	private final Input.FIELDTYPES INPUT_TYPE;
+	private final String input_title;
+	private final String placeholder;
+	private final Input.ORIENTATIONS input_orientation;
+	private final Input.CATEGORIES category;
+	private final String name;
+	private final boolean required;
 
-	/**
-	 *
-	 * Tells us the various types of field types available in the HTML form
-	 */
-	public static enum FIELDTYPES {
-		TEXTAREA_INPUT, TEXT_INPUT, SELECT_INPUT, CHECKBOX_INPUT, RADIO_INPUT, FILE_INPUT, BUTTON_INPUT, COLOR_INPUT, DATE_INPUT, EMAIL_INPUT, IMAGE_INPUT, NUMBER_INPUT, PASSWORD_INPUT, HIDDEN_INPUT, UNDEFINED_INPUT, RESET_BUTTON, SEARCH_INPUT, TELEPHONE_INPUT, TIME_INPUT, URL_INPUT, WEEK_INPUT, SUBMIT_INPUT
-	};
-	
-	public static enum CATEGORIES {
-		EMAIL, JOB_SEARCH, NAME, AGE, DOB, GENDER, DESC, PASSWORD, STATE, CITY, NATIONALITY, COUNTRY, CONTACT, ADDRESS, PIN_CODE, USERNAME, T_AND_C 
-	};
+	private static final Logger LOGGER;
+	private static InputClassifier CLASSIFIER;
 
 	private static final String TOP_LABEL_IMAGE = "./img/top.png";
 	private static final String LEFT_LABEL_IMAGE = "./img/left.png";
-
 	public static final List<String> VALID_INPUT_TAGS;
 
-	static {
-		String[] a = {"input", "textarea", "select", "button"};
-		VALID_INPUT_TAGS = Arrays.asList(a);
-	}
+	public static enum FIELDTYPES {
+		TEXTAREA_INPUT, TEXT_INPUT, SELECT_INPUT, CHECKBOX_INPUT, RADIO_INPUT, FILE_INPUT, BUTTON_INPUT, COLOR_INPUT, DATE_INPUT, EMAIL_INPUT, IMAGE_INPUT, NUMBER_INPUT, PASSWORD_INPUT, HIDDEN_INPUT, UNDEFINED_INPUT, RESET_BUTTON, SEARCH_INPUT, TELEPHONE_INPUT, TIME_INPUT, URL_INPUT, WEEK_INPUT, SUBMIT_INPUT
+	};
+
+	public static enum CATEGORIES {
+		EMAIL, JOB_SEARCH, NAME, AGE, DOB, GENDER, DESC, PASSWORD, STATE, CITY, NATIONALITY, COUNTRY, CONTACT, ADDRESS, PIN_CODE, USERNAME, T_AND_C
+	};
 
 	public static enum ORIENTATIONS {
 		LABEL_TOP, LABEL_LEFT, LABEL_RIGHT
 	};
-	
-	public static boolean findRequired(Element text_input) {
-		
-		return text_input.hasAttr("required");
+
+	public Input(Form f, Element ip, Input.FIELDTYPES field_type) throws IOException, Exception {
+		this.INPUT_TYPE = field_type;
+		this.input = ip;
+		this.form = f;
+		//detect input_orientation
+		this.input_orientation = Input.findOrientation(this);
+		this.input_title = Input.findLabel(this);
+		this.placeholder = Input.findPlaceHolder(this);
+		this.required = Input.findRequired(this.input);
+		this.category = Input.findCategory(this.input_title + " " + this.placeholder);
+		this.name = Input.findName(this);
 	}
 
-	public abstract Form getAssociatedForm();
+	static {
+		String[] a = {"input", "textarea", "select", "button"};
+		VALID_INPUT_TAGS = Arrays.asList(a);
+
+		LOGGER = Logger.getGlobal();
+		try {
+			CLASSIFIER = new InputClassifier();
+		} catch (Exception ex) {
+			LOGGER.log(Level.INFO, "[ERROR] Unable to init InputClassifier for Input {0}", ex);
+		}
+
+	}
+
+	public Form getAssociatedForm() {
+		return this.form;
+	}
+
+	public FIELDTYPES getType() {
+		return this.INPUT_TYPE;
+	}
 
 	/**
-	 * For getting the FIELD_TYPE of any Input IS-A Object
+	 * Return jsoup Element of Input
+	 *
+	 * @return Element
+	 */
+	public Element getElement() {
+		return this.input;
+	}
+
+	/**
+	 *
+	 * For getting the category of the input for suggestion engine
 	 *
 	 * @return
 	 */
-	public abstract Input.FIELDTYPES getType();
+	public Input.CATEGORIES getCategory() {
+		return this.category;
+	}
+
+	/**
+	 * Should return title of Input
+	 *
+	 * @return
+	 */
+	public String getTitle() {
+		return this.input_title;
+	}
+
+	/**
+	 * Returns placeholder for element
+	 *
+	 * @return
+	 */
+	public String getPlaceHolder() {
+		return this.placeholder;
+	}
+
+	public ORIENTATIONS getOrientation() {
+		return this.input_orientation;
+	}
+
+	public boolean isRequired() {
+		return this.required;
+	}
+
+	public String getName() {
+		return this.name;
+	}
 
 	/**
 	 *
@@ -70,12 +141,9 @@ public abstract class Input {
 	 */
 	public abstract void fill();
 
-	/**
-	 * Return jsoup Element of Input
-	 *
-	 * @return Element
-	 */
-	public abstract Element getElement();
+	public static boolean findRequired(Element text_input) {
+		return text_input.hasAttr("required");
+	}
 
 	public static String findPlaceHolder(Input input) {
 		if (input.getType().equals(Input.FIELDTYPES.TEXT_INPUT) || input.getType().equals(Input.FIELDTYPES.TEXTAREA_INPUT)) {
@@ -86,46 +154,10 @@ public abstract class Input {
 		}
 	}
 
-	/**
-	 *
-	 * Returns text from image
-	 *
-	 * @return
-	 */
-	private String getImageText() {
-		return null;
-
+	public static Input.CATEGORIES findCategory(String text) throws Exception {
+		return Input.CLASSIFIER.getCategory(text);
 	}
 
-	
-	 /**
-	  *  Correct OCR output by using min edit distance against keywords from form
-	  * @param ocr
-	  * @return 
-	  */
-	private static String correctOCRtext(String ocr, String[] form_tokens){
-		//System.out.println(ocr);
-		LOGGER.log(Level.INFO, "[START] OCR Correction on {0}", ocr);
-		String[] keywords = form_tokens;
-		String token = ocr;
-		int min = ocr.length();
-		for(String keyword : keywords){
-			//System.out.println(keyword);
-			int dist = StringUtils.getLevenshteinDistance(ocr, keyword);
-			//System.out.println(dist);
-			if(dist < min){
-				min = dist;
-				token = keyword;
-			}
-		}
-		//System.out.println(token);
-		
-		LOGGER.log(Level.INFO, "[DONE] OCR Correction on {0} - > {1}", new Object[]{ocr, token});
-		
-		return token;
-		
-	}
-	
 	/**
 	 * Get the label of the Input
 	 *
@@ -143,7 +175,7 @@ public abstract class Input {
 				return output;
 			case LABEL_LEFT:
 				String fn1 = input.getAssociatedForm().getAssociatedPage().getLeftLabelScreenshot(input);
-				
+
 				String output1 = Input.execCmd("tesseract " + fn1 + " stdout");
 				output1 = Input.filter_label(output1);
 				output1 = Input.correctOCRtext(output1, form_tokens);
@@ -154,7 +186,42 @@ public abstract class Input {
 
 	}
 
-	public static Input.ORIENTATIONS detectOrientation(Input inp) throws IOException {
+	private static String findName(Input inp) {
+		return inp.getElement().attr("name");
+
+	}
+
+	/**
+	 * Correct OCR output by using min edit distance against keywords from
+	 * form
+	 *
+	 * @param ocr
+	 * @return
+	 */
+	public static String correctOCRtext(String ocr, String[] form_tokens) {
+		//System.out.println(ocr);
+		LOGGER.log(Level.INFO, "[START] OCR Correction on {0}", ocr);
+		String[] keywords = form_tokens;
+		String token = ocr;
+		int min = ocr.length();
+		for (String keyword : keywords) {
+			//System.out.println(keyword);
+			int dist = StringUtils.getLevenshteinDistance(ocr, keyword);
+			//System.out.println(dist);
+			if (dist < min) {
+				min = dist;
+				token = keyword;
+			}
+		}
+		//System.out.println(token);
+
+		LOGGER.log(Level.INFO, "[DONE] OCR Correction on {0} - > {1}", new Object[]{ocr, token});
+
+		return token;
+
+	}
+
+	public static Input.ORIENTATIONS findOrientation(Input inp) throws IOException {
 
 		//System.out.println("HEY");
 		//case 1 top label
@@ -176,7 +243,7 @@ public abstract class Input {
 		//throw new java.io.IOException("Unable to detect any input orientation");
 	}
 
-	private static String execCmd(String cmd) throws java.io.IOException {
+	public static String execCmd(String cmd) throws java.io.IOException {
 		java.util.Scanner s = new java.util.Scanner(Runtime.getRuntime().exec(cmd).getInputStream()).useDelimiter("\\A");
 		if (s.hasNext()) {
 			return s.next();
@@ -184,14 +251,6 @@ public abstract class Input {
 			throw new java.io.IOException("output of execCmd is empty string\nCheck your js script");
 		}
 	}
-
-	/**
-	 *
-	 * For getting the category of the input for suggestion engine
-	 *
-	 * @return
-	 */
-	public abstract String getCategory();
 
 	/**
 	 * Replaces common label punctuations used in the field title
@@ -205,33 +264,9 @@ public abstract class Input {
 		return text.trim();
 	}
 
-	/**
-	 * Should return title of Input
-	 *
-	 * @return
-	 */
-	public abstract String getTitle();
-
-	/**
-	 * Returns placeholder for element
-	 *
-	 * @return
-	 */
-	public abstract String getPlaceHolder();
-
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 	}
 
-	public abstract Input.ORIENTATIONS getOrientation();
-	
-	public abstract boolean isRequired();
-
-	//for logging
-	private static final Logger LOGGER;
-
-	static {
-		LOGGER = Logger.getGlobal();
-	}
 }

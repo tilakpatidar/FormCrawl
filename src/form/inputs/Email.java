@@ -10,13 +10,13 @@ import form.Input;
 import java.io.IOException;
 import org.jsoup.nodes.Element;
 /**
- * Text input implementation
+ * Email input implementation
  *
  * @author tilak
  */
-public class Text extends Input {
+public class Email extends Input {
 
-	public Text(Form f, Element ip, Input.FIELDTYPES field_type) throws IOException, Exception {
+	public Email(Form f, Element ip, Input.FIELDTYPES field_type) throws IOException, Exception {
 		super(f, ip, field_type);
 	}
 

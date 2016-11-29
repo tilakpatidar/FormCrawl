@@ -195,7 +195,7 @@ public class Form {
 		return form_elements;
 	}
 
-	protected Input detectInput(Element ip) throws IOException {
+	protected Input detectInput(Element ip) throws IOException, Exception {
 		String tag_name = ip.tagName();
 		Input inp;
 		switch (tag_name) {

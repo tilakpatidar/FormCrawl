@@ -11,7 +11,7 @@ import form.Input;
  * BayesClassifier for input labels
  * @author tilak
  */
-public class InputClassifier extends BayesClassifier {
+final public class InputClassifier extends BayesClassifier {
 
 	public final static String DATA_SET_PATH = "/home/tilak/NetBeansProjects/FormCrawl/corpus/inputs.arff";
 	public final static String STOP_WORD_PATH  = "/home/tilak/NetBeansProjects/FormCrawl/corpus/stopwords_en.txt";
