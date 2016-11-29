@@ -15,6 +15,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 /**
  * abstract class for all types of inputs.
@@ -32,6 +34,8 @@ public abstract class Input {
 	private final Input.CATEGORIES category;
 	private final String name;
 	private final boolean required;
+	private final WebElement web_element;
+	private final String css_selector;
 
 	private static final Logger LOGGER;
 	private static InputClassifier CLASSIFIER;
@@ -63,6 +67,9 @@ public abstract class Input {
 		this.required = Input.findRequired(this.input);
 		this.category = Input.findCategory(this.input_title + " " + this.placeholder);
 		this.name = Input.findName(this);
+		this.css_selector = this.input.cssSelector();
+		this.web_element = this.getAssociatedForm().getAssociatedPage().getDriver().findElement(By.cssSelector(this.css_selector));
+				
 	}
 
 	static {
@@ -93,6 +100,15 @@ public abstract class Input {
 	 */
 	public Element getElement() {
 		return this.input;
+	}
+	
+	/**
+	 * Return WebElement of Input
+	 *
+	 * @return WebElement
+	 */
+	public WebElement getWebElement() {
+		return this.web_element;
 	}
 
 	/**
@@ -133,6 +149,16 @@ public abstract class Input {
 
 	public String getName() {
 		return this.name;
+	}
+	
+	public String getTooltipData(){
+		
+		String data = "Input label - " + this.input_title + "<br/>Input category - " + this.getCategory().toString() + "<br/>Input orientation - " + this.getOrientation().toString();
+		return data;
+	}
+	
+	public String getCSSSelector(){
+		return this.css_selector;
 	}
 
 	/**

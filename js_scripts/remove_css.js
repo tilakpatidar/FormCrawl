@@ -1,5 +1,6 @@
 
-var css = '*{ margin-left: 5px !important; font-size: 32px !important; margin-top: 0 !important; -webkit-margin-after: 2px !important;} input, textarea, select{-webkit-appearance: none !important;background-color: black !important;margin-bottom: 15px !important;margin-top: 15px !important; width: 300px !important; height: 40px !important;}::-webkit-input-placeholder { /* Chrome/Opera/Safari */color: black;}::-moz-placeholder { /* Firefox 19+ */  color: black;}:-ms-input-placeholder { /* IE 10+ */  color: black;}:-moz-placeholder { /* Firefox 18- */  color: black;}button{border: none !important;color: black !important;padding: 10px !important;background-color: white !important;-webkit-appearance: none !important;}',
+window.old_dom = document.querySelector("html").innerHTML;
+var css = '*{ margin-left: 5px !important; font-size: 32px !important; margin-top: 0 !important; -webkit-margin-after: 2px !important;} input, textarea, select{-webkit-appearance: none !important;background-color: black !important;margin-bottom: 15px !important;margin-top: 15px !important; width: 300px !important; height: 40px !important;}::-webkit-input-placeholder { /* Chrome/Opera/Safari */color: black;}::-moz-placeholder { /* Firefox 19+ */  color: black;}:-ms-input-placeholder { /* IE 10+ */  color: black;}:-moz-placeholder { /* Firefox 18- */  color: black;}button{border: none !important;color: black !important;padding: 10px !important;background-color: white !important;-webkit-appearance: none !important;}.tooltiptext { width: 200px; padding: 10px; background-color: #51a351; color: #fff; text-align: center; font-size: 18px !important; font-weight: 600; font-family: monospace; border-radius: 2px;  position: absolute; z-index: 1;}',
         head = document.head || document.getElementsByTagName('head')[0],
         style = document.createElement('style');
 style.setAttribute("name", "hacked_css_123");
@@ -13,7 +14,7 @@ if (style.styleSheet) {
 
 head.appendChild(style);
 
-setInterval(function () {
+window.css_remove_timer = setInterval(function () {
     var toRemove = [];
     toRemove.push.apply(toRemove, document.querySelectorAll('link[type*="css"]'));
     toRemove.push.apply(toRemove, document.querySelectorAll('style'));
@@ -29,8 +30,9 @@ setInterval(function () {
     });
 
     [].forEach.call(document.querySelectorAll('[style]'), function (e) {
-
-        e.removeAttribute('style');
+        if (e.getAttribute("name") !== "hacked_css_123") {
+            e.removeAttribute('style');
+        }
     });
 
     var stylesheets = document.styleSheets;
@@ -76,7 +78,21 @@ setInterval(function () {
             e = e || event;
             e.preventDefault();
             return false;
-        }
+        };
     }
 
 }, 1000);
+
+
+window.restoreOldDom = function () {
+    setTimeout(function(){
+        if(window.confirm("Return back to UI")){
+            clearInterval(window.css_remove_timer);
+            document.write(window.old_dom);
+        }
+    }, 5000);
+    
+};
+
+
+

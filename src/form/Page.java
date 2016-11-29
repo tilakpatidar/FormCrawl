@@ -5,6 +5,7 @@
  */
 package form;
 
+import formcrawl.FormCrawl;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,8 +54,6 @@ public final class Page {
 	private Document soup;
 	private WebDriver driver;
 
-	
-
 	/**
 	 * HashMap to categorize the various Input types
 	 */
@@ -70,13 +69,25 @@ public final class Page {
 		this.url_value = new URL(url_value);
 		this.forms = new ArrayList<Form>();
 
-		System.out.println(this.toString());
+		
 
 		this.processSeleniumChoice();
 		this.removeCSS();
 		this.filterHTML();
 		this.createDOM();
 		this.findForms();
+		
+		//restoring old dom once page object is created
+		
+		if (this.driver instanceof JavascriptExecutor) {
+			//System.out.println(code);
+			((JavascriptExecutor) driver)
+				.executeScript("window.restoreOldDom();");
+		}
+		System.out.println(this.toString());
+		
+		FormCrawl.drivers.add(this.driver);
+		
 
 	}
 
@@ -170,7 +181,6 @@ public final class Page {
 
 	private void removeCSS() {
 
-
 		try {
 			File f = new File("./js_scripts/remove_css.js");
 			String code = new Scanner(f).useDelimiter("\\Z").next();
@@ -178,6 +188,10 @@ public final class Page {
 				//System.out.println(code);
 				((JavascriptExecutor) driver)
 					.executeScript(code);
+				
+				WebElement element = this.driver.findElement(By.cssSelector("body"));
+				this.createTooltip(element, "CSS removed for analyzing page structure");
+		
 			}
 
 		} catch (IOException e) {
@@ -199,11 +213,11 @@ public final class Page {
 	 * @return
 	 */
 	private String getElementScreenShot(Element e, int x, int y, int w, int h) throws IOException {
-		if(x < 0){
+		if (x < 0) {
 			x = 0;
 		}
-		
-		if(y < 0){
+
+		if (y < 0) {
 			y = 0;
 		}
 
@@ -271,9 +285,9 @@ public final class Page {
 
 	}
 
-	 public String getLeftLabelScreenshot(Input inp) throws IOException {
-		 
-		 Element input = inp.getElement();
+	public String getLeftLabelScreenshot(Input inp) throws IOException {
+
+		Element input = inp.getElement();
 
 		WebElement element = this.driver.findElement(By.cssSelector(input.cssSelector()));
 		WebElement form_element = this.driver.findElement(By.cssSelector(inp.getAssociatedForm().getElement().cssSelector()));
@@ -289,12 +303,32 @@ public final class Page {
 
 		//System.out.println(x + "   " + y + "  " + w + "  " + h);
 		return this.getElementScreenShot(input, x, y, w, h);
+
+	}
+	
+	public void createTooltip(WebElement element, String text){
 		
-	  }
-	 
-	 
-	
-	
+		Point point = element.getLocation();
+		int xcord = point.getX();
+		int new_x_loc = xcord + element.getSize().getWidth() + 15;
+		int new_y_loc = point.getY() + element.getSize().height;
+		
+		if(element.getTagName().equals("body")){
+			new_y_loc = 20;
+			new_x_loc = element.getSize().getWidth() / 2 - 50;
+			
+		}
+		
+		String code = "var new_item = document.createElement('SPAN'); new_item.innerHTML = '" + text + "'; new_item.setAttribute('name','hacked_css_123'); new_item.setAttribute('style', 'position: absolute !important; left:" + new_x_loc + "px !important; top: " +new_y_loc+ "px !important; '); new_item.className = 'tooltiptext'; document.body.appendChild(new_item);";
+		//restoring old dom once page object is created
+		System.out.println(code);
+		if (this.driver instanceof JavascriptExecutor) {
+			System.out.println(code);
+			((JavascriptExecutor) driver)
+				.executeScript(code);
+		}
+	}
+
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 	}

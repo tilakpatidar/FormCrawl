@@ -84,6 +84,7 @@ public class Form {
 				Input input_obj = this.detectInput(input);
 				this.form_inputs.add(input_obj);
 				LOGGER.log(Level.INFO, "[DONE] Created Input instance {0}", count);
+				this.page.createTooltip(input_obj.getWebElement(), input_obj.getTooltipData());
 			} catch (Exception e) {
 				LOGGER.log(Level.INFO, "[FAIL] Create Input instance {0}", count);
 				e.printStackTrace();

@@ -6,14 +6,17 @@
 package formcrawl;
 
 import form.Page;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.openqa.selenium.WebDriver;
 
 /**
  *
@@ -25,6 +28,7 @@ public class FormCrawl extends javax.swing.JFrame {
 	 * Creates new form FormCrawl
 	 */
 	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+	public static ArrayList<WebDriver> drivers = new ArrayList<WebDriver>();
 
 	public FormCrawl() {
 		initComponents();
@@ -77,6 +81,11 @@ public class FormCrawl extends javax.swing.JFrame {
                 LoggerTextArea = new javax.swing.JTextArea();
 
                 setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+                addWindowListener(new java.awt.event.WindowAdapter() {
+                        public void windowClosing(java.awt.event.WindowEvent evt) {
+                                closingWindow(evt);
+                        }
+                });
 
                 jLabel1.setText("Enter the webpage URL");
 
@@ -161,6 +170,10 @@ public class FormCrawl extends javax.swing.JFrame {
                 pack();
         }// </editor-fold>//GEN-END:initComponents
 
+	
+	
+	
+	
     private void URLFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_URLFieldActionPerformed
 	    // TODO add your handling code here:
     }//GEN-LAST:event_URLFieldActionPerformed
@@ -178,6 +191,21 @@ public class FormCrawl extends javax.swing.JFrame {
 
 
     }//GEN-LAST:event_jButton1ActionPerformed
+
+        private void closingWindow(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closingWindow
+                // TODO add your handling code here:
+		for(WebDriver driver : FormCrawl.drivers){
+			
+			try{
+				driver.quit();
+			}catch(Exception e){
+				
+			}
+			
+		} 
+		
+		
+        }//GEN-LAST:event_closingWindow
 
 	/**
 	 * @param args the command line arguments
