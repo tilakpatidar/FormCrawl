@@ -6,153 +6,55 @@
 package form.ml;
 
 import form.Input;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import weka.classifiers.meta.FilteredClassifier;
-import weka.core.FastVector;
-import weka.core.Instances;
-import weka.core.Attribute;
-import weka.core.Instance;
-import weka.core.tokenizers.NGramTokenizer;
-import weka.filters.Filter;
-import weka.filters.unsupervised.attribute.StringToWordVector;
 
 /**
- * Performs naive bayes classification to determine input category
- *
+ * BayesClassifier for input labels
  * @author tilak
  */
-public class InputClassifier {
+public class InputClassifier extends BayesClassifier {
 
-	/**
-	 * String that stores the text to classify
-	 */
-	private String text;
-	/**
-	 * Object that stores the instance.
-	 */
-	private Instances instances;
-	/**
-	 * Object that stores the classifier.
-	 */
-	private FilteredClassifier classifier;
+	public final static String DATA_SET_PATH = "/home/tilak/NetBeansProjects/FormCrawl/corpus/inputs.arff";
+	public final static String STOP_WORD_PATH  = "/home/tilak/NetBeansProjects/FormCrawl/corpus/stopwords_en.txt";
+	public static int CLASS_INDEX = 0;
+	
 
-	/**
-	 * This method loads the text to be classified.
-	 *
-	 * @param data
-	 */
-	public void load(String data) {
-		this.text = data;
+	public InputClassifier() throws Exception{
+		super(InputClassifier.DATA_SET_PATH, InputClassifier.STOP_WORD_PATH, InputClassifier.CLASS_INDEX);
+		
 	}
-
+	
 	/**
-	 * This method loads the model to be used as classifier.
-	 *
-	 * @param fileName The name of the file that stores the text.
+	 * Get an Input category
+	 * @param input_title
+	 * @return Input.CATEGORIES
+	 * @throws Exception 
 	 */
-	public void loadModel(String fileName) {
-		try {
-			ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName));
-			Object tmp = in.readObject();
-			classifier = (FilteredClassifier) tmp;
-			System.out.println(classifier);
-			in.close();
-			System.out.println("===== Loaded model: " + fileName + " =====");
-		} catch (IOException | ClassNotFoundException e) {
-			System.out.println("Problem found when reading: " + fileName);
-		}
+	public Input.CATEGORIES getCategory(String input_title) throws Exception{
+		String label = super.classifyLabel(input_title);
+		return Input.CATEGORIES.valueOf(label);
+		
 	}
-
-	/**
-	 * This method creates the instance to be classified, from the text that
-	 * has been read.
-	 */
-	public void makeInstance() throws Exception {
-		// Create the attributes, class and text
-		FastVector fvNominalVal = new FastVector();
-
-		//classes
-		
-		for(Input.CATEGORIES cat : Input.CATEGORIES.values()){
-			System.out.println(cat.toString());
-			fvNominalVal.addElement(cat.toString());
-		}
-		
-		//fvNominalVal.addElement(cat.toString());
-
-		Attribute attribute1 = new Attribute("category", fvNominalVal);
-		Attribute attribute2 = new Attribute("text", (FastVector) null);
-
-		// Create list of instances with one element
-		FastVector fvWekaAttributes = new FastVector(2);
-		fvWekaAttributes.addElement(attribute1);
-		fvWekaAttributes.addElement(attribute2);
-		instances = new Instances("input", fvWekaAttributes, 1);
-		System.out.println(attribute1);
-		System.out.println(attribute2);
-		System.out.println(instances.numAttributes());
-		// Set class index
-		instances.setClassIndex(0);
-		
-		
-		// Create ansetd add the instance
-		Instance instance = new Instance(2);
-		System.out.println(this.text);
-		instance.setValue((Attribute)fvWekaAttributes.elementAt(1), text);
-		
-		
-		System.out.println(instance);
-		
-		instances.add(instance);
-		
-		// Set the tokenizer
-			NGramTokenizer tokenizer = new NGramTokenizer();
-			tokenizer.setNGramMinSize(1);
-			tokenizer.setNGramMaxSize(3);
-			tokenizer.setDelimiters("\\s");
-			
-			// Set the filter
-			StringToWordVector filter = new StringToWordVector();
-			filter.setTokenizer(tokenizer);
-			filter.setInputFormat(instances);
-			filter.setWordsToKeep(1000000);
-			filter.setDoNotOperateOnPerClassBasis(true);
-			filter.setLowerCaseTokens(true);
-			
-			// Filter the input instances into the output ones
-			instances = Filter.useFilter(instances,filter);
-		System.out.println("===== Instance created with reference dataset =====");
-		System.out.println(instances);
-	}
-
-	/**
-	 * This method performs the classification of the instance. Output is
-	 * done at the command-line.
-	 */
-	public void classify() {
-		try {
-			double pred = classifier.classifyInstance(instances.instance(0));
-			System.out.println("===== Classified instance =====");
-			System.out.println("Class predicted: " + instances.classAttribute().value((int) pred));
-		} catch (Exception e) {
-			System.out.println("Problem found when classifying the text");
-		}
-	}
-
-	/**
-	 * Main method. It is an example of the usage of this class.
-	 *
-	 * @param args Command-line arguments: fileData and fileModel.
-	 */
-	public static void main(String[] args) throws Exception {
-
+	
+	public static void main(String[] args) throws Exception{
 		InputClassifier classifier = new InputClassifier();
-
-		classifier.load("job search");
-		classifier.loadModel("/home/tilak/NetBeansProjects/FormCrawl/corpus/inputs_o.arff");
-		classifier.makeInstance();
-		classifier.classify();
+		System.out.println(classifier.getCategory("create new password"));
+		
+		
 	}
+	
+	
+	/**
+	 * Overriden, to forbid usage user getCategory instead
+	 * @param text
+	 * @return String
+	 * @override
+	 */
+	@Override
+	public String classifyLabel(String text) throws UnsupportedOperationException {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.);
+
+	}
+	
+	
+	
 }
