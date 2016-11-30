@@ -10,10 +10,6 @@
     ["state"],
     ["city", "town", "place"],
     ["nationality"],
-    ["country", "nation"],
-    
-
+    ["country", "nation"]
+   
 ]
-
-
-EMAIL, JOB_SEARCH, NAME, AGE, DOB, GENDER, DESC, PASSWORD, STATE, CITY, NATIONALITY, COUNTRY, MOBILE, TELEPHONE, ADDRESS, PIN_CODE, USERNAME, COMPANY, COLLEGE, DEPARTMENT, FAX, T_AND_C
