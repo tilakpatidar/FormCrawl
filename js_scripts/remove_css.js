@@ -14,6 +14,49 @@ if (style.styleSheet) {
 
 head.appendChild(style);
 
+var km = ['click', 'dblclick', 'mousedown', 'mousemove', 'mouseover', 'mouseout', 'mouseup', 'mouseenter', 'mouseleave', 'keydown', 'keypress', 'keyup', 'scroll'];
+
+function allowAll(parent){
+        var dom = parent.getElementsByTagName('*');
+        for (var i = 0, l = dom.length; i < l; i++) {
+            for (var n = 0, c = km.length; n < c; n++) {
+                dom[i].removeEventListener(km[n], prevent, false);
+            }
+        }
+        var fr = frames;
+        for (var i = 0, l = fr.length; i < l; i++) {
+            // cancell frames events here
+        }
+        
+        for (var n = 0, c = km.length; n < c; n++) {
+            window.removeEventListener(km[n], prevent, false);
+        }
+}
+var prevent = function(e){
+        e = e || event;
+        e.preventDefault();
+        return false;
+    };
+    
+    
+function preventAll(parent) {
+    var dom = parent.getElementsByTagName('*');
+    for (var i = 0, l = dom.length; i < l; i++) {
+        for (var n = 0, c = km.length; n < c; n++) {
+            dom[i].addEventListener(km[n], prevent, false);
+        }
+    }
+    var fr = frames;
+    for (var i = 0, l = fr.length; i < l; i++) {
+        // cancell frames events here
+    }
+
+
+    for (var n = 0, c = km.length; n < c; n++) {
+        window.addEventListener(km[n], prevent,false);
+    }
+}
+
 window.css_remove_timer = setInterval(function () {
     var toRemove = [];
     toRemove.push.apply(toRemove, document.querySelectorAll('link[type*="css"]'));
@@ -53,33 +96,11 @@ window.css_remove_timer = setInterval(function () {
         len--;
     }
 
-    var km = ['click', 'dblclick', 'mousedown', 'mousemove', 'mouseover', 'mouseout', 'mouseup', 'mouseenter', 'mouseleave', 'keydown', 'keypress', 'keyup', 'scroll'];
-    function preventAll(parent) {
-        var dom = parent.getElementsByTagName('*');
-        for (var i = 0, l = dom.length; i < l; i++) {
-            for (var n = 0, c = km.length; n < c; n++) {
-                dom[i]['on' + km[n]] = function (e) {
-                    e = e || event;
-                    e.preventDefault();
-                    return false;
-                }
-            }
-        }
-        var fr = frames;
-        for (var i = 0, l = fr.length; i < l; i++) {
-            // cancell frames events here
-        }
-    }
+    
     preventAll(document);
 
 
-    for (var n = 0, c = km.length; n < c; n++) {
-        window['on' + km[n]] = function (e) {
-            e = e || event;
-            e.preventDefault();
-            return false;
-        };
-    }
+  
 
 }, 1000);
 
@@ -88,7 +109,12 @@ window.restoreOldDom = function () {
     setTimeout(function(){
         if(window.confirm("Return back to UI")){
             clearInterval(window.css_remove_timer);
-            document.write(window.old_dom);
+            var elems = document.querySelectorAll("[name='hacked_css_123']");
+            elems.forEach(function(e){
+                e.remove();
+            });
+            allowAll(document);
+            //document.write(window.old_dom);
         }
     }, 5000);
     

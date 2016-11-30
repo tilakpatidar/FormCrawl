@@ -5,13 +5,20 @@
  */
 package form;
 
+import form.inputs.Button;
+import form.inputs.CheckBox;
+import form.inputs.Email;
+import form.inputs.Password;
+import form.inputs.Radio;
 import form.inputs.Text;
+import form.inputs.TextArea;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +26,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 /**
  * Represents a form instance with many inputs and actions.
@@ -38,6 +47,9 @@ public class Form {
 	private final Element form_dom;
 	private ArrayList<Input> form_inputs;
 	private final String[] form_tokens;
+	private final HashMap<String, String> params;
+	private Button reset_button;
+	private Button submit_button;
 
 	/**
 	 * Accepts JSOUP form element
@@ -49,25 +61,22 @@ public class Form {
 
 		LOGGER.info("[START] Creating instance of Form");
 		this.checkValidFormDom(form_dom);
-		
-	
-		
+		this.params = new HashMap();
 		this.page = page;
 		this.form_dom = form_dom;
 		this.form_method = this.extractFormMethod();
 		this.form_action = this.extractFormAction();
-		
-			
+
 		String form_text = Input.filter_label(this.form_dom.text());
 		String[] keywords = StringUtils.splitPreserveAllTokens(form_text);
-		
+
 		int index = 0;
-		for(String keyword : keywords){
+		for (String keyword : keywords) {
 			//System.out.println(keyword);
 			keywords[index] = Input.filter_label(keyword);
 			index++;
 		}
-		
+
 		this.form_tokens = keywords;
 
 		LOGGER.log(Level.INFO, "[DONE] Form action and method detected");
@@ -83,6 +92,17 @@ public class Form {
 				LOGGER.log(Level.INFO, "[START] Create Input instance {0}", count);
 				Input input_obj = this.detectInput(input);
 				this.form_inputs.add(input_obj);
+				if (input_obj instanceof Button) {
+					//System.out.println(input_obj);
+					Button b = (Button) input_obj;
+					//System.out.println(b);
+					if (b.getButtonType().equals(Button.TYPES.SUBMIT)) {
+						this.submit_button = b;
+					} else if (b.getButtonType().equals(Button.TYPES.RESET)) {
+						this.reset_button = b;
+					}
+
+				}
 				LOGGER.log(Level.INFO, "[DONE] Created Input instance {0}", count);
 				this.page.createTooltip(input_obj.getWebElement(), input_obj.getTooltipData());
 			} catch (Exception e) {
@@ -91,6 +111,11 @@ public class Form {
 			}
 			count += 1;
 		}
+
+		if (this.submit_button == null) {
+			throw new RuntimeException("No submit button present");
+		}
+
 		LOGGER.log(Level.INFO, "[DONE] Created {0} Input objects", form_inputs.size());
 		//System.out.println("LL515");
 
@@ -104,9 +129,54 @@ public class Form {
 	static {
 		LOGGER = Logger.getGlobal();
 	}
-	
-	public String[] getFormTokens(){
+
+	public String[] getFormTokens() {
 		return this.form_tokens;
+	}
+
+	public ArrayList<Input> getAssociatedInputs() {
+		return this.form_inputs;
+	}
+
+	public void setKeyValue(String key, String val) {
+		WebElement element = this.getAssociatedPage().getDriver().findElement(By.cssSelector("[" + key + "]"));
+		//https://www.grazitti.com/resources/articles/automating-different-input-fields-using-selenium-webdriver/
+		//http://www.guru99.com/accessing-forms-in-webdriver.html
+		this.params.put(key, val);
+	}
+
+	public Form.METHODS getMethod() {
+		return this.form_method;
+	}
+
+	public void submitForm() {
+		this.fillForm();
+		Button b = this.getSubmitButton();
+		b.getWebElement().click();
+
+	}
+
+	public Button getSubmitButton() {
+		return this.submit_button;
+	}
+
+	public Button getResetButton() {
+		return this.reset_button;
+	}
+
+	private void fillForm() {
+		ArrayList<Input> i = this.getAssociatedInputs();
+		for (Input inp : i) {
+			//System.out.println(inp.getTitle());
+			if (inp instanceof Text) {
+				Text t = (Text) inp;
+				t.fill("tilakpatidar@gmail.com");
+			} else if (inp instanceof Email) {
+				Email e = (Email) inp;
+				e.fill("tilakpatidar@gmail.com");
+			}
+
+		}
 	}
 
 	private void checkValidFormDom(Element form_dom) {
@@ -199,6 +269,8 @@ public class Form {
 	protected Input detectInput(Element ip) throws IOException, Exception {
 		String tag_name = ip.tagName();
 		Input inp;
+		Button bt;
+		//System.out.println(tag_name);
 		switch (tag_name) {
 			case "input":
 				String input_type = ip.attr("type").toLowerCase();
@@ -206,101 +278,132 @@ public class Form {
 				switch (input_type) {
 					case "text":
 						field_type = Input.FIELDTYPES.TEXT_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "radio":
 						field_type = Input.FIELDTYPES.RADIO_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Radio(this, ip);
 						break;
 					case "file":
 						field_type = Input.FIELDTYPES.FILE_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "checkbox":
 						field_type = Input.FIELDTYPES.CHECKBOX_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new CheckBox(this, ip);
 						break;
 					case "button":
 						field_type = Input.FIELDTYPES.BUTTON_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Button(this, ip);
+						bt = (Button) inp;
+						bt.setButtonType(Button.TYPES.NORMAL);
 						break;
 					case "color":
 						field_type = Input.FIELDTYPES.COLOR_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "date":
 						field_type = Input.FIELDTYPES.DATE_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "email":
 						field_type = Input.FIELDTYPES.EMAIL_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Email(this, ip);
 						break;
 					case "hidden":
 						field_type = Input.FIELDTYPES.HIDDEN_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "image":
 						field_type = Input.FIELDTYPES.IMAGE_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "number":
 						field_type = Input.FIELDTYPES.NUMBER_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "password":
 						field_type = Input.FIELDTYPES.PASSWORD_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Password(this, ip);
 						break;
 					case "reset":
-						field_type = Input.FIELDTYPES.RESET_BUTTON;
-						inp = new Text(this, ip, field_type);
+						field_type = Input.FIELDTYPES.BUTTON_INPUT;
+						inp = new Button(this, ip);
+						bt = (Button) inp;
+						bt.setButtonType(Button.TYPES.RESET);
 						break;
 					case "search":
 						field_type = Input.FIELDTYPES.SEARCH_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "submit":
-						field_type = Input.FIELDTYPES.SUBMIT_INPUT;
-						inp = new Text(this, ip, field_type);
+						field_type = Input.FIELDTYPES.BUTTON_INPUT;
+						inp = new Button(this, ip);
+						bt = (Button) inp;
+						bt.setButtonType(Button.TYPES.SUBMIT);
 						break;
 					case "tel":
 						field_type = Input.FIELDTYPES.TELEPHONE_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "time":
 						field_type = Input.FIELDTYPES.TIME_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "url":
 						field_type = Input.FIELDTYPES.URL_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					case "week":
 						field_type = Input.FIELDTYPES.WEEK_INPUT;
-						inp = new Text(this, ip, field_type);
+						inp = new Text(this, ip);
 						break;
 					default:
-						field_type = Input.FIELDTYPES.UNDEFINED_INPUT;
+
 						throw new RuntimeException("Undefined input detected");
 				}
 				break;
 
 			case "select":
 				field_type = Input.FIELDTYPES.SELECT_INPUT;
-				inp = new Text(this, ip, field_type);
+				inp = new Text(this, ip);
 				break;
 			case "button":
-				field_type = Input.FIELDTYPES.BUTTON_INPUT;
-				inp = new Text(this, ip, field_type);
+				String in = ip.attr("type").toLowerCase();
+				//System.out.println(in);
+				switch (in) {
+					case "reset":
+						field_type = Input.FIELDTYPES.BUTTON_INPUT;
+						inp = new Button(this, ip);
+						bt = (Button) inp;
+						bt.setButtonType(Button.TYPES.RESET);
+						break;
+					case "submit":
+						field_type = Input.FIELDTYPES.BUTTON_INPUT;
+						inp = new Button(this, ip);
+						try {
+							bt = (Button) inp;
+							bt.setButtonType(Button.TYPES.SUBMIT);
+							//System.out.println(bt);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+
+						break;
+					default:
+						field_type = Input.FIELDTYPES.BUTTON_INPUT;
+						inp = new Button(this, ip);
+						bt = (Button) inp;
+						bt.setButtonType(Button.TYPES.NORMAL);
+
+				}
 				break;
+
 			case "textarea":
 				field_type = Input.FIELDTYPES.TEXTAREA_INPUT;
-				inp = new Text(this, ip, field_type);
+				inp = new TextArea(this, ip);
 				break;
 			default:
-				field_type = Input.FIELDTYPES.UNDEFINED_INPUT;
-				inp = new Text(this, ip, field_type);
 				throw new RuntimeException("Undefined input detected");
 		}
 

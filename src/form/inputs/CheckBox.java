@@ -11,21 +11,21 @@ import java.io.IOException;
 import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebElement;
 /**
- * Email input implementation
+ * CheckBox input implementation
  *
  * @author tilak
  */
-public class Email extends Input {
+public class CheckBox extends Input {
 
-	public Email(Form f, Element ip) throws IOException, Exception {
-		super(f, ip, Input.FIELDTYPES.EMAIL_INPUT);
+	
+	public CheckBox(Form f, Element ip) throws IOException, Exception {
+		super(f, ip, Input.FIELDTYPES.CHECKBOX_INPUT);
 	}
 
 	@Override
 	public void fill(String val) {
 		WebElement e = this.getWebElement();
-		e.sendKeys(val);
-		
+		e.click();
 	}
 
 

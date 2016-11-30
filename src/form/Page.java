@@ -30,13 +30,16 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.JavascriptExecutor;
 import java.io.File;
+import java.util.function.Function;
 import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.FluentWait;
 
 /**
  *
@@ -69,24 +72,29 @@ public final class Page {
 		this.url_value = new URL(url_value);
 		this.forms = new ArrayList<Form>();
 
-		
-
 		this.processSeleniumChoice();
 		this.removeCSS();
 		this.filterHTML();
 		this.createDOM();
 		this.findForms();
-		
+
 		//restoring old dom once page object is created
-		
 		if (this.driver instanceof JavascriptExecutor) {
 			//System.out.println(code);
 			((JavascriptExecutor) driver)
 				.executeScript("window.restoreOldDom();");
 		}
-		System.out.println(this.toString());
-		
+		//System.out.println(this.toString());
+
 		FormCrawl.drivers.add(this.driver);
+		//now fill the form
+		Thread.sleep(10000);
+		//re-render web driver dom
+		
+		for(Form f : this.forms){
+			
+			f.submitForm();
+		}
 		
 
 	}
@@ -95,38 +103,7 @@ public final class Page {
 		LOGGER = Logger.getGlobal();
 	}
 
-	private void processHTMLChoice() {
-
-		try {
-			URLConnection uc = this.url_value.openConnection();
-			InputStream ip = uc.getInputStream();
-			LOGGER.info("Reading web page");
-			try (BufferedReader buff = new BufferedReader(new InputStreamReader(ip, "UTF-8"))) {
-				String inputLine;
-				StringBuilder a = new StringBuilder();
-				while ((inputLine = buff.readLine()) != null) {
-					a.append(inputLine);
-				}
-				this.page_source = a.toString();
-				LOGGER.log(Level.INFO, "Web page read {0} chars", a.length());
-
-			} catch (Exception e) {
-				LOGGER.info("Error in reading web page");
-				LOGGER.log(Level.FINEST, "[ERROR] {0}", e.getMessage());
-			}
-
-		} catch (MalformedURLException e) {
-			LOGGER.info("[ERROR] URL error");
-			LOGGER.log(Level.FINEST, "[ERROR] {0}", e.getMessage());
-
-		} catch (IOException e) {
-			LOGGER.info("[ERROR] Download error");
-			LOGGER.log(Level.FINEST, "[ERROR] {0}", e.getMessage());
-		} finally {
-
-		}
-
-	}
+	
 
 	private void processSeleniumChoice() {
 		WebDriver driver = new ChromeDriver();
@@ -188,10 +165,10 @@ public final class Page {
 				//System.out.println(code);
 				((JavascriptExecutor) driver)
 					.executeScript(code);
-				
+
 				WebElement element = this.driver.findElement(By.cssSelector("body"));
 				this.createTooltip(element, "CSS removed for analyzing page structure");
-		
+
 			}
 
 		} catch (IOException e) {
@@ -305,21 +282,21 @@ public final class Page {
 		return this.getElementScreenShot(input, x, y, w, h);
 
 	}
-	
-	public void createTooltip(WebElement element, String text){
-		
+
+	public void createTooltip(WebElement element, String text) {
+
 		Point point = element.getLocation();
 		int xcord = point.getX();
 		int new_x_loc = xcord + element.getSize().getWidth() + 15;
 		int new_y_loc = point.getY() + element.getSize().height;
-		
-		if(element.getTagName().equals("body")){
+
+		if (element.getTagName().equals("body")) {
 			new_y_loc = 20;
 			new_x_loc = element.getSize().getWidth() / 2 - 50;
-			
+
 		}
-		
-		String code = "var new_item = document.createElement('SPAN'); new_item.innerHTML = '" + text + "'; new_item.setAttribute('name','hacked_css_123'); new_item.setAttribute('style', 'position: absolute !important; left:" + new_x_loc + "px !important; top: " +new_y_loc+ "px !important; '); new_item.className = 'tooltiptext'; document.body.appendChild(new_item);";
+
+		String code = "var new_item = document.createElement('SPAN'); new_item.innerHTML = '" + text + "'; new_item.setAttribute('name','hacked_css_123'); new_item.setAttribute('style', 'position: absolute !important; left:" + new_x_loc + "px !important; top: " + new_y_loc + "px !important; '); new_item.className = 'tooltiptext'; document.body.appendChild(new_item);";
 		//restoring old dom once page object is created
 		System.out.println(code);
 		if (this.driver instanceof JavascriptExecutor) {
@@ -327,6 +304,7 @@ public final class Page {
 			((JavascriptExecutor) driver)
 				.executeScript(code);
 		}
+
 	}
 
 	public String toString() {

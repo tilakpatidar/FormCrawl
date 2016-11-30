@@ -45,31 +45,34 @@ public abstract class Input {
 	public static final List<String> VALID_INPUT_TAGS;
 
 	public static enum FIELDTYPES {
-		TEXTAREA_INPUT, TEXT_INPUT, SELECT_INPUT, CHECKBOX_INPUT, RADIO_INPUT, FILE_INPUT, BUTTON_INPUT, COLOR_INPUT, DATE_INPUT, EMAIL_INPUT, IMAGE_INPUT, NUMBER_INPUT, PASSWORD_INPUT, HIDDEN_INPUT, UNDEFINED_INPUT, RESET_BUTTON, SEARCH_INPUT, TELEPHONE_INPUT, TIME_INPUT, URL_INPUT, WEEK_INPUT, SUBMIT_INPUT
+		TEXTAREA_INPUT, TEXT_INPUT, SELECT_INPUT, CHECKBOX_INPUT, RADIO_INPUT, FILE_INPUT, BUTTON_INPUT, COLOR_INPUT, DATE_INPUT, EMAIL_INPUT, IMAGE_INPUT, NUMBER_INPUT, PASSWORD_INPUT, HIDDEN_INPUT, SEARCH_INPUT, TELEPHONE_INPUT, TIME_INPUT, URL_INPUT, WEEK_INPUT
 	};
 
 	public static enum CATEGORIES {
-		EMAIL, JOB_SEARCH, NAME, AGE, DOB, GENDER, DESC, PASSWORD, STATE, CITY, NATIONALITY, COUNTRY, CONTACT, ADDRESS, PIN_CODE, USERNAME, T_AND_C
+		EMAIL, JOB_SEARCH, NAME, AGE, DOB, GENDER, DESC, PASSWORD, STATE, CITY, NATIONALITY, COUNTRY, CONTACT, ADDRESS, PIN_CODE, USERNAME, T_AND_C, ACTION_ITEM
 	};
 
 	public static enum ORIENTATIONS {
-		LABEL_TOP, LABEL_LEFT, LABEL_RIGHT
+		LABEL_TOP, LABEL_LEFT, LABEL_RIGHT, NO_ORIENTATION_REQ
 	};
 
 	public Input(Form f, Element ip, Input.FIELDTYPES field_type) throws IOException, Exception {
 		this.INPUT_TYPE = field_type;
 		this.input = ip;
 		this.form = f;
-		//detect input_orientation
-		this.input_orientation = Input.findOrientation(this);
-		this.input_title = Input.findLabel(this);
-		this.placeholder = Input.findPlaceHolder(this);
+		
+		this.input_orientation = this.findOrientation();
+		
+		this.input_title = this.findLabel();
+		
+		this.placeholder = this.findPlaceHolder();
+		
 		this.required = Input.findRequired(this.input);
-		this.category = Input.findCategory(this.input_title + " " + this.placeholder);
+		this.category = this.findCategory(this.input_title + " " + this.placeholder);
 		this.name = Input.findName(this);
 		this.css_selector = this.input.cssSelector();
 		this.web_element = this.getAssociatedForm().getAssociatedPage().getDriver().findElement(By.cssSelector(this.css_selector));
-				
+
 	}
 
 	static {
@@ -101,7 +104,7 @@ public abstract class Input {
 	public Element getElement() {
 		return this.input;
 	}
-	
+
 	/**
 	 * Return WebElement of Input
 	 *
@@ -150,14 +153,14 @@ public abstract class Input {
 	public String getName() {
 		return this.name;
 	}
-	
-	public String getTooltipData(){
-		
+
+	public String getTooltipData() {
+
 		String data = "Input label - " + this.input_title + "<br/>Input category - " + this.getCategory().toString() + "<br/>Input orientation - " + this.getOrientation().toString();
 		return data;
 	}
-	
-	public String getCSSSelector(){
+
+	public String getCSSSelector() {
 		return this.css_selector;
 	}
 
@@ -165,23 +168,28 @@ public abstract class Input {
 	 *
 	 * Fill the Input IS-A object with some value
 	 */
-	public abstract void fill();
+	public abstract void fill(String value);
 
 	public static boolean findRequired(Element text_input) {
 		return text_input.hasAttr("required");
 	}
 
-	public static String findPlaceHolder(Input input) {
-		if (input.getType().equals(Input.FIELDTYPES.TEXT_INPUT) || input.getType().equals(Input.FIELDTYPES.TEXTAREA_INPUT)) {
-			return input.getElement().attr("placeholder");
+	private String findPlaceHolder() {
+		if (this.getType().equals(Input.FIELDTYPES.TEXT_INPUT) || this.getType().equals(Input.FIELDTYPES.TEXTAREA_INPUT)) {
+			return this.getElement().attr("placeholder");
 
 		} else {
-			return null;
+			return "";
 		}
 	}
 
-	public static Input.CATEGORIES findCategory(String text) throws Exception {
-		return Input.CLASSIFIER.getCategory(text);
+	private Input.CATEGORIES findCategory(String text) throws Exception {
+		if(this.getType().equals(Input.FIELDTYPES.BUTTON_INPUT)){
+			return Input.CATEGORIES.ACTION_ITEM;
+		}else{
+			return Input.CLASSIFIER.getCategory(text);
+		}
+		
 	}
 
 	/**
@@ -190,22 +198,27 @@ public abstract class Input {
 	 * @param input
 	 * @return
 	 */
-	public static String findLabel(Input input) throws IOException {
-		String[] form_tokens = input.getAssociatedForm().getFormTokens();
-		switch (input.getOrientation()) {
+	private String findLabel() throws IOException {
+		
+		if(this.getType().equals(Input.FIELDTYPES.BUTTON_INPUT)){
+			return this.getElement().text();
+		}
+		
+		String[] form_tokens = this.getAssociatedForm().getFormTokens();
+		switch (this.getOrientation()) {
 			case LABEL_TOP:
-				String fn = input.getAssociatedForm().getAssociatedPage().getTopLabelScreenshot(input);
+				String fn = this.getAssociatedForm().getAssociatedPage().getTopLabelScreenshot(this);
 				String output = Input.execCmd("tesseract " + fn + " stdout");
 				output = Input.filter_label(output);
 				output = Input.correctOCRtext(output, form_tokens);
 				return output;
 			case LABEL_LEFT:
-				String fn1 = input.getAssociatedForm().getAssociatedPage().getLeftLabelScreenshot(input);
+				String fn1 = this.getAssociatedForm().getAssociatedPage().getLeftLabelScreenshot(this);
 
 				String output1 = Input.execCmd("tesseract " + fn1 + " stdout");
 				output1 = Input.filter_label(output1);
 				output1 = Input.correctOCRtext(output1, form_tokens);
-				System.out.println(fn1 + "  " + output1);
+				//System.out.println(fn1 + "  " + output1);
 				return output1;
 		}
 		return null;
@@ -247,11 +260,15 @@ public abstract class Input {
 
 	}
 
-	public static Input.ORIENTATIONS findOrientation(Input inp) throws IOException {
+	private Input.ORIENTATIONS findOrientation() throws IOException {
 
 		//System.out.println("HEY");
 		//case 1 top label
-		String file_name = inp.getAssociatedForm().getAssociatedPage().getTopLabelFieldScreenshot(inp);
+		//detect input_orientation
+		if(this.INPUT_TYPE.equals(Input.FIELDTYPES.BUTTON_INPUT)){
+			return Input.ORIENTATIONS.NO_ORIENTATION_REQ;
+		}
+		String file_name = this.getAssociatedForm().getAssociatedPage().getTopLabelFieldScreenshot(this);
 		LOGGER.log(Level.INFO, "nodejs ./js_scripts/diff.js " + file_name + " " + Input.TOP_LABEL_IMAGE);
 		String output = Input.execCmd("nodejs ./js_scripts/diff.js " + file_name + " " + Input.TOP_LABEL_IMAGE);
 

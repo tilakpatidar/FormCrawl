@@ -11,14 +11,14 @@ import java.io.IOException;
 import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebElement;
 /**
- * Email input implementation
+ * TextArea input implementation
  *
  * @author tilak
  */
-public class Email extends Input {
+public class TextArea extends Input {
 
-	public Email(Form f, Element ip) throws IOException, Exception {
-		super(f, ip, Input.FIELDTYPES.EMAIL_INPUT);
+	public TextArea(Form f, Element ip) throws IOException, Exception {
+		super(f, ip, Input.FIELDTYPES.TEXTAREA_INPUT);
 	}
 
 	@Override
@@ -30,3 +30,4 @@ public class Email extends Input {
 
 
 }
+
