@@ -37,11 +37,11 @@ public abstract class Input {
 	private final WebElement web_element;
 	private final String css_selector;
 
-	private static final Logger LOGGER;
+	protected static final Logger LOGGER;
 	private static InputClassifier CLASSIFIER;
 
-	private static final String TOP_LABEL_IMAGE = "./img/top.png";
-	private static final String LEFT_LABEL_IMAGE = "./img/left.png";
+	protected static final String TOP_LABEL_IMAGE = "./img/top.png";
+	protected static final String LEFT_LABEL_TEXT_IMAGE = "./img/left.png";
 	public static final List<String> VALID_INPUT_TAGS;
 
 	public static enum FIELDTYPES {
@@ -260,14 +260,12 @@ public abstract class Input {
 
 	}
 
-	private Input.ORIENTATIONS findOrientation() throws IOException {
+	protected Input.ORIENTATIONS findOrientation() throws IOException {
 
 		//System.out.println("HEY");
 		//case 1 top label
 		//detect input_orientation
-		if(this.INPUT_TYPE.equals(Input.FIELDTYPES.BUTTON_INPUT)){
-			return Input.ORIENTATIONS.NO_ORIENTATION_REQ;
-		}
+		
 		String file_name = this.getAssociatedForm().getAssociatedPage().getTopLabelFieldScreenshot(this);
 		LOGGER.log(Level.INFO, "nodejs ./js_scripts/diff.js " + file_name + " " + Input.TOP_LABEL_IMAGE);
 		String output = Input.execCmd("nodejs ./js_scripts/diff.js " + file_name + " " + Input.TOP_LABEL_IMAGE);

@@ -42,6 +42,11 @@ public class Button extends Input {
 		return this.button_type;
 	}
 	
+	@Override
+	protected Input.ORIENTATIONS findOrientation() throws IOException{
+		return Input.ORIENTATIONS.NO_ORIENTATION_REQ;
+	}
+	
 	public void submit(){
 		if(this.button_type.equals(Button.TYPES.SUBMIT)){
 			this.getWebElement().click();
@@ -49,6 +54,8 @@ public class Button extends Input {
 			throw new UnsupportedOperationException("Only SUMBIT type Button can do SUBMIT");
 		}
 	}
+	
+	
 	
 	
 }
