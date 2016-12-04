@@ -225,7 +225,6 @@ public abstract class Input {
 				String output1 = Input.execCmd("tesseract " + fn1 + " stdout");
 				output1 = Input.filter_label(output1);
 				output1 = Input.correctOCRtext(output1, form_tokens);
-				//System.out.println(fn1 + "  " + output1);
 				return output1;
 		}
 		return null;
@@ -245,21 +244,17 @@ public abstract class Input {
 	 * @return
 	 */
 	public static String correctOCRtext(String ocr, String[] form_tokens) {
-		//System.out.println(ocr);
 		LOGGER.log(Level.INFO, "[START] OCR Correction on {0}", ocr);
 		String[] keywords = form_tokens;
 		String token = ocr;
 		int min = ocr.length();
 		for (String keyword : keywords) {
-			//System.out.println(keyword);
 			int dist = StringUtils.getLevenshteinDistance(ocr, keyword);
-			//System.out.println(dist);
 			if (dist < min) {
 				min = dist;
 				token = keyword;
 			}
 		}
-		//System.out.println(token);
 
 		LOGGER.log(Level.INFO, "[DONE] OCR Correction on {0} - > {1}", new Object[]{ocr, token});
 

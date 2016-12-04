@@ -79,11 +79,9 @@ public final class Page {
 
 		//restoring old dom once page object is created
 		if (this.driver instanceof JavascriptExecutor) {
-			//System.out.println(code);
 			((JavascriptExecutor) driver)
 				.executeScript("window.restoreOldDom();");
 		}
-		//System.out.println(this.toString());
 
 		FormCrawl.drivers.add(this.driver);
 		
@@ -151,7 +149,6 @@ public final class Page {
 			File f = new File("./js_scripts/remove_css.js");
 			String code = new Scanner(f).useDelimiter("\\Z").next();
 			if (this.driver instanceof JavascriptExecutor) {
-				//System.out.println(code);
 				((JavascriptExecutor) driver)
 					.executeScript(code);
 
@@ -205,7 +202,6 @@ public final class Page {
 		String random_name = "./screenshots/" + "screen" + e.hashCode() + "" + (int) (Math.random() * 1000) + ".png";
 		FileUtils.copyFile(screen, new File(random_name));
 		LOGGER.log(Level.FINER, "[DEBUG] " + random_name);
-		//System.out.println(random_name);
 		return random_name;
 
 	}
@@ -253,8 +249,6 @@ public final class Page {
 		int x, y, w, h;
 
 		Point up = element.getLocation();
-		//System.out.println("up y " + up.getY());
-		//System.out.println("low y " + element.getLocation().getY());
 		y = element.getLocation().getY() - 55; //font size is 32 px default
 		x = up.getX() - 5;
 		w = element.getSize().getWidth() + 10;
@@ -273,8 +267,6 @@ public final class Page {
 		WebElement form_element = this.driver.findElement(By.cssSelector(inp.getAssociatedForm().getElement().cssSelector()));
 		int x, y, w, h;
 
-		//System.out.println("up y " + up.getY());
-		//System.out.println("low y " + element.getLocation().getY());
 		y = element.getLocation().getY() - 5; //font size is 32 px default
 		int diff = element.getLocation().getX() - form_element.getLocation().getX();
 		x = form_element.getLocation().getX();
@@ -301,10 +293,8 @@ public final class Page {
 
 		String code = "var new_item = document.createElement('SPAN'); new_item.innerHTML = '" + text + "'; new_item.setAttribute('name','hacked_css_123'); new_item.setAttribute('style', 'position: absolute !important; left:" + new_x_loc + "px !important; top: " + new_y_loc + "px !important; '); new_item.className = 'tooltiptext'; document.body.appendChild(new_item);";
 		//restoring old dom once page object is created
-		//System.out.println(code);
 		LOGGER.log(Level.FINER, "[FINER] js generated code " + code);
 		if (this.driver instanceof JavascriptExecutor) {
-			System.out.println(code);
 			((JavascriptExecutor) driver)
 				.executeScript(code);
 		}

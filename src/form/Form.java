@@ -74,7 +74,6 @@ public class Form {
 
 		int index = 0;
 		for (String keyword : keywords) {
-			//System.out.println(keyword);
 			keywords[index] = Input.filter_label(keyword);
 			index++;
 		}
@@ -99,9 +98,7 @@ public class Form {
 				LOGGER.log(Level.FINER, input_obj.toString());
 				if (input_obj instanceof Button) {
 					LOGGER.log(Level.FINER, "[FINER] Button instance detected");
-					//System.out.println(input_obj);
 					Button b = (Button) input_obj;
-					//System.out.println(b);
 					if (b.getButtonType().equals(Button.TYPES.SUBMIT)) {
 						LOGGER.log(Level.FINER, "[FINER] Button is submit");
 						this.submit_button = b;
@@ -126,7 +123,6 @@ public class Form {
 		}
 
 		LOGGER.log(Level.INFO, "[DONE] Created {0} Input objects", form_inputs.size());
-		//System.out.println("LL515");
 
 		LOGGER.log(Level.FINER, this.toString());
 
@@ -169,7 +165,6 @@ public class Form {
 		// TODO implement fillForm for all types
 		ArrayList<Input> i = this.getAssociatedInputs();
 		for (Input inp : i) {
-			//System.out.println(inp.getTitle());
 			if (inp instanceof Text) {
 				Text t = (Text) inp;
 				t.fill("tilakpatidar@gmail.com");
@@ -274,7 +269,6 @@ public class Form {
 		String tag_name = ip.tagName();
 		Input inp;
 		Button bt;
-		//System.out.println(tag_name);
 		switch (tag_name) {
 			case "input":
 				String input_type = ip.attr("type").toLowerCase();
@@ -375,7 +369,6 @@ public class Form {
 				break;
 			case "button":
 				String in = ip.attr("type").toLowerCase();
-				//System.out.println(in);
 				switch (in) {
 					case "reset":
 						field_type = Input.FIELDTYPES.BUTTON_INPUT;
@@ -389,7 +382,6 @@ public class Form {
 						try {
 							bt = (Button) inp;
 							bt.setButtonType(Button.TYPES.SUBMIT);
-							//System.out.println(bt);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
