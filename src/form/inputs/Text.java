@@ -25,7 +25,7 @@ public class Text extends Input {
 
 	@Override
 	public void fill(String value) {
-		WebElement e = this.getAssociatedForm().getAssociatedPage().getDriver().findElement(By.cssSelector(this.getCSSSelector()));
+		WebElement e = this.getWebElement();
 		e.click();
 		e.clear();
 		e.sendKeys(value);

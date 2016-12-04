@@ -106,17 +106,13 @@ window.css_remove_timer = setInterval(function () {
 
 
 window.restoreOldDom = function () {
-    setTimeout(function(){
-        if(window.confirm("Return back to UI")){
-            clearInterval(window.css_remove_timer);
-            var elems = document.querySelectorAll("[name='hacked_css_123']");
-            elems.forEach(function(e){
-                e.remove();
-            });
-            allowAll(document);
-            //document.write(window.old_dom);
-        }
-    }, 5000);
+    clearInterval(window.css_remove_timer);
+    var elems = document.querySelectorAll("[name='hacked_css_123']");
+    elems.forEach(function(e){
+        e.remove();
+    });
+    allowAll(document);
+    document.write(window.old_dom);
     
 };
 

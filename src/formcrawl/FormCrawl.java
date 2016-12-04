@@ -36,7 +36,8 @@ public class FormCrawl extends javax.swing.JFrame {
 		try {
 			MyLogger.setup(LoggerTextArea);
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.log(Level.INFO, "[FAIL] Setting up Logger failed");
+			LOGGER.log(Level.FINEST, "[ERROR]", e);
 			throw new RuntimeException("Problems with creating the log files");
 
 		}
@@ -54,11 +55,11 @@ public class FormCrawl extends javax.swing.JFrame {
 			LOGGER.log(Level.INFO, "[DONE] Touched screenshots directory");
 			LOGGER.log(Level.INFO, "[DONE] Reset screenshots directory");
 		} catch (IOException ex) {
-			Logger.getLogger(FormCrawl.class.getName()).log(Level.SEVERE, null, ex);
 			LOGGER.log(Level.INFO, "[FAIL] Reset screenshots directory");
+			LOGGER.log(Level.FINEST, "[ERROR]", ex);
 		}
 
-		LOGGER.setLevel(Level.FINEST); //set the logging info
+
 		LOGGER.log(Level.INFO, "[DONE] Form UI started");
 	}
 
@@ -185,15 +186,13 @@ public class FormCrawl extends javax.swing.JFrame {
 		    LOGGER.log(Level.INFO, "[DONE] Page created");
 	    } catch (Exception e) {
 		    LOGGER.log(Level.INFO, "[FAIL] Page creation failed {0}", e.getMessage());
-		    LOGGER.log(Level.FINEST, "[ERROR] {0}", e.getMessage());
-		    e.printStackTrace();
+		    LOGGER.log(Level.FINEST,"[ERROR]", e);
 	    }
 
 
     }//GEN-LAST:event_jButton1ActionPerformed
 
-        private void closingWindow(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closingWindow
-                // TODO add your handling code here:
+        private void closingWindow(java.awt.event.WindowEvent evt) {
 		for(WebDriver driver : FormCrawl.drivers){
 			
 			try{

@@ -6,11 +6,7 @@
 package formcrawl;
 
 import java.io.IOException;
-import java.util.logging.FileHandler;
-import java.util.logging.Formatter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
+import java.util.logging.*;
 import javax.swing.JTextArea;
 
 /**
@@ -22,7 +18,8 @@ public class MyLogger {
 
 	static private FileHandler fileTxt;
 	static private SimpleFormatter formatterTxt;
-
+	static private TextAreaHandler textAreaHandler;
+	static private Handler consoleHandler;
 	static private FileHandler fileHTML;
 	static private Formatter formatterHTML;
 
@@ -32,22 +29,51 @@ public class MyLogger {
 		boolean append = true;
 		Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-		logger.setLevel(Level.INFO);
+		//prevent using parent holders
+		logger.setUseParentHandlers(false);
+
+		//Remove old handlers
+		Handler[] handlers = logger.getHandlers();
+
+		for(Handler old_handle : handlers){
+			logger.removeHandler(old_handle);
+		}
+
+		//set logger level here
+		logger.setLevel(Level.ALL);
+
+		//file, html and console handler
 		fileTxt = new FileHandler("default.log", append);
 		fileHTML = new FileHandler("default_log.html", append);
+		textAreaHandler = new TextAreaHandler();
+		consoleHandler = new ConsoleHandler();
 
-		// create a TXT formatter
+		//set handler levels
+		consoleHandler.setLevel(Level.FINEST);
+		textAreaHandler.setLevel(Level.FINEST);
+		fileTxt.setLevel(Level.FINEST);
+		fileHTML.setLevel(Level.INFO);
+
+
+		//create various formatters
 		formatterTxt = new SimpleFormatter();
-		fileTxt.setFormatter(formatterTxt);
-		logger.addHandler(fileTxt);
-
-		// create an HTML formatter
 		formatterHTML = new MyHtmlFormatter();
-		fileHTML.setFormatter(formatterHTML);
-		logger.addHandler(fileHTML);
 
-		TextAreaHandler textAreaHandler = new TextAreaHandler();
-		textAreaHandler.setTextArea(area);
+
+		//setting formatters
+		fileTxt.setFormatter(formatterTxt);
+		consoleHandler.setFormatter(formatterTxt);
+		fileHTML.setFormatter(formatterHTML);
+
+		//add handlers
+		logger.addHandler(fileTxt);
+		logger.addHandler(consoleHandler);
+		logger.addHandler(fileHTML);
 		logger.addHandler(textAreaHandler);
+
+
+
+		textAreaHandler.setTextArea(area);
+
 	}
 }

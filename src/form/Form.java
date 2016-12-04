@@ -50,6 +50,7 @@ public class Form {
 	private final HashMap<String, String> params;
 	private Button reset_button;
 	private Button submit_button;
+	private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
 	/**
 	 * Accepts JSOUP form element
@@ -61,6 +62,7 @@ public class Form {
 
 		LOGGER.info("[START] Creating instance of Form");
 		this.checkValidFormDom(form_dom);
+		LOGGER.info("[DONE] Dom checked for validation.");
 		this.params = new HashMap();
 		this.page = page;
 		this.form_dom = form_dom;
@@ -81,6 +83,8 @@ public class Form {
 
 		LOGGER.log(Level.INFO, "[DONE] Form action and method detected");
 
+
+		//creating instances of Inputs
 		Elements input_collection = Form.detectFields(this.form_dom);
 		this.form_inputs = new ArrayList<Input>();
 
@@ -92,13 +96,17 @@ public class Form {
 				LOGGER.log(Level.INFO, "[START] Create Input instance {0}", count);
 				Input input_obj = this.detectInput(input);
 				this.form_inputs.add(input_obj);
+				LOGGER.log(Level.FINER, input_obj.toString());
 				if (input_obj instanceof Button) {
+					LOGGER.log(Level.FINER, "[FINER] Button instance detected");
 					//System.out.println(input_obj);
 					Button b = (Button) input_obj;
 					//System.out.println(b);
 					if (b.getButtonType().equals(Button.TYPES.SUBMIT)) {
+						LOGGER.log(Level.FINER, "[FINER] Button is submit");
 						this.submit_button = b;
 					} else if (b.getButtonType().equals(Button.TYPES.RESET)) {
+						LOGGER.log(Level.FINER, "[FINER] Button is reset");
 						this.reset_button = b;
 					}
 
@@ -107,28 +115,24 @@ public class Form {
 				this.page.createTooltip(input_obj.getWebElement(), input_obj.getTooltipData());
 			} catch (Exception e) {
 				LOGGER.log(Level.INFO, "[FAIL] Create Input instance {0}", count);
-				e.printStackTrace();
+				LOGGER.log(Level.FINEST, "[ERROR]", e);
 			}
 			count += 1;
 		}
 
 		if (this.submit_button == null) {
+			LOGGER.log(Level.INFO, "[FAIL] No submit button present abort form creation");
 			throw new RuntimeException("No submit button present");
 		}
 
 		LOGGER.log(Level.INFO, "[DONE] Created {0} Input objects", form_inputs.size());
 		//System.out.println("LL515");
 
-		LOGGER.info(this.toString());
+		LOGGER.log(Level.FINER, this.toString());
 
 	}
 
-	//for logging in class Form
-	private static final Logger LOGGER;
 
-	static {
-		LOGGER = Logger.getGlobal();
-	}
 
 	public String[] getFormTokens() {
 		return this.form_tokens;
@@ -139,9 +143,6 @@ public class Form {
 	}
 
 	public void setKeyValue(String key, String val) {
-		WebElement element = this.getAssociatedPage().getDriver().findElement(By.cssSelector("[" + key + "]"));
-		//https://www.grazitti.com/resources/articles/automating-different-input-fields-using-selenium-webdriver/
-		//http://www.guru99.com/accessing-forms-in-webdriver.html
 		this.params.put(key, val);
 	}
 
@@ -165,6 +166,7 @@ public class Form {
 	}
 
 	private void fillForm() {
+		// TODO implement fillForm for all types
 		ArrayList<Input> i = this.getAssociatedInputs();
 		for (Input inp : i) {
 			//System.out.println(inp.getTitle());
@@ -182,8 +184,7 @@ public class Form {
 	private void checkValidFormDom(Element form_dom) {
 		//check for type before construction
 		if (!form_dom.tagName().equalsIgnoreCase("FORM")) {
-			LOGGER.info("[ERROR] form_dom must be of tagName type \"form\"");
-			LOGGER.log(Level.INFO, "[FAIL] Creating instance of Form failed");
+			LOGGER.log(Level.WARNING, "[FAIL] form_dom must be of tagName type \"form\"");
 			throw new IllegalArgumentException("form_dom must be of tagName type \"form\"");
 		}
 	}
@@ -225,23 +226,26 @@ public class Form {
 			URI orig_form_url = new URI(this.form_dom.attr("action"));
 
 			if (orig_form_url.toString().isEmpty()) {
-				LOGGER.log(Level.INFO, "[ERROR] No form action url present in form_dom");
-				throw new MalformedURLException("URL empty or null");
+				LOGGER.log(Level.INFO, "[FAIL] No form action url present in form_dom");
+				MalformedURLException e = new MalformedURLException("URL empty or null");
+				LOGGER.log(Level.FINEST, "[ERROR]", e);
+				throw e;
 			}
 
 			if (!orig_form_url.isAbsolute()) {
 				//make absolute
+				LOGGER.log(Level.INFO, "[INFO] Converted form relative url to absolute");
 				return new URL(page.url_value, orig_form_url.toString());
 			} else {
 				return orig_form_url.toURL();
 			}
 		} catch (MalformedURLException ex) {
-			LOGGER.log(Level.INFO, "[ERROR] FORM action URL malformed {0}", ex.getMessage());
-			LOGGER.log(Level.FINEST, "[ERROR] {0}", ex.getMessage());
+			LOGGER.log(Level.INFO, "[FAIL] FORM action URL malformed");
+			LOGGER.log(Level.FINEST, "[ERROR]", ex);
 			throw new RuntimeException("Cannot create form object");
 		} catch (URISyntaxException ex) {
-			LOGGER.log(Level.INFO, "[ERROR] FORM action URI cast malformed {0}", ex.getMessage());
-			LOGGER.log(Level.FINEST, "[ERROR] {0}", ex.getMessage());
+			LOGGER.log(Level.INFO, "[FAIL] FORM action URI cast malformed");
+			LOGGER.log(Level.FINEST, "[ERROR] {0}", ex);
 			throw new RuntimeException("Cannot create form object");
 		}
 	}
@@ -359,7 +363,8 @@ public class Form {
 						inp = new Text(this, ip);
 						break;
 					default:
-
+						LOGGER.log(Level.INFO, "[FAIL] Undefined input detected");
+						LOGGER.log(Level.FINEST, "[ERROR] nothing in switch case matches " + input_type);
 						throw new RuntimeException("Undefined input detected");
 				}
 				break;
@@ -404,6 +409,8 @@ public class Form {
 				inp = new TextArea(this, ip);
 				break;
 			default:
+				LOGGER.log(Level.INFO, "[FAIL] Undefined input detected");
+				LOGGER.log(Level.FINEST, "[ERROR] nothing in switch case matches " + tag_name);
 				throw new RuntimeException("Undefined input detected");
 		}
 

@@ -15,6 +15,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -37,7 +38,7 @@ public abstract class Input {
 	private final WebElement web_element;
 	private final String css_selector;
 
-	protected static final Logger LOGGER;
+	protected static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	private static InputClassifier CLASSIFIER;
 
 	protected static final String TOP_LABEL_IMAGE = "./img/top.png";
@@ -60,13 +61,13 @@ public abstract class Input {
 		this.INPUT_TYPE = field_type;
 		this.input = ip;
 		this.form = f;
-		
+
 		this.input_orientation = this.findOrientation();
-		
+
 		this.input_title = this.findLabel();
-		
+
 		this.placeholder = this.findPlaceHolder();
-		
+
 		this.required = Input.findRequired(this.input);
 		this.category = this.findCategory(this.input_title + " " + this.placeholder);
 		this.name = Input.findName(this);
@@ -79,11 +80,11 @@ public abstract class Input {
 		String[] a = {"input", "textarea", "select", "button"};
 		VALID_INPUT_TAGS = Arrays.asList(a);
 
-		LOGGER = Logger.getGlobal();
 		try {
 			CLASSIFIER = new InputClassifier();
 		} catch (Exception ex) {
-			LOGGER.log(Level.INFO, "[ERROR] Unable to init InputClassifier for Input {0}", ex);
+			LOGGER.log(Level.INFO, "[ERROR] Unable to init InputClassifier for Input");
+			LOGGER.log(Level.FINEST,"[ERROR]", ex);
 		}
 
 	}
@@ -189,21 +190,27 @@ public abstract class Input {
 		}else{
 			return Input.CLASSIFIER.getCategory(text);
 		}
-		
+
 	}
 
 	/**
 	 * Get the label of the Input
 	 *
-	 * @param input
 	 * @return
 	 */
 	private String findLabel() throws IOException {
-		
+
 		if(this.getType().equals(Input.FIELDTYPES.BUTTON_INPUT)){
 			return this.getElement().text();
 		}
-		
+
+		//search if dev used a label[for=]
+		String id = this.getElement().id();
+		final Elements associated_labels = this.getAssociatedForm().getElement().select("label[for='" + id + "'");
+		if( associated_labels.first() != null){
+				return Input.filter_label(associated_labels.first().text());
+		}
+
 		String[] form_tokens = this.getAssociatedForm().getFormTokens();
 		switch (this.getOrientation()) {
 			case LABEL_TOP:
@@ -262,18 +269,31 @@ public abstract class Input {
 
 	protected Input.ORIENTATIONS findOrientation() throws IOException {
 
-		//System.out.println("HEY");
+		LOGGER.log(Level.INFO, "[INFO] Detecting orientation");
 		//case 1 top label
 		//detect input_orientation
-		
+		String id = this.getElement().id();
+		LOGGER.log(Level.FINER, "[DEBUG] Element id " + id);
+		final Elements associated_labels = this.getAssociatedForm().getElement().select("label[for='" + id + "'");
+		LOGGER.log(Level.FINEST, "[DEBUG] " + associated_labels.toString());
+
+		if( associated_labels.first() != null){
+			return ORIENTATIONS.NO_ORIENTATION_REQ;
+		}
+
 		String file_name = this.getAssociatedForm().getAssociatedPage().getTopLabelFieldScreenshot(this);
-		LOGGER.log(Level.INFO, "nodejs ./js_scripts/diff.js " + file_name + " " + Input.TOP_LABEL_IMAGE);
+		LOGGER.log(Level.FINER, "[DEBUG] shell command nodejs ./js_scripts/diff.js " + file_name + " " + Input.TOP_LABEL_IMAGE);
+
 		String output = Input.execCmd("nodejs ./js_scripts/diff.js " + file_name + " " + Input.TOP_LABEL_IMAGE);
 
 		output = output.replaceAll("(\\n+)|(\\t+)|(\\s+)|(\\r+)", " ").replaceAll("\\s+", " ").trim();
-		//System.out.println(output);
+
+
 		Double diff = Double.parseDouble(output);
 		int diff_per = diff.intValue();
+
+		LOGGER.log(Level.FINER, "[DEBUG] Diff value " + diff_per);
+
 		if (diff_per < 10) {
 			//yes label is on top
 			return Input.ORIENTATIONS.LABEL_TOP;
@@ -289,12 +309,13 @@ public abstract class Input {
 		if (s.hasNext()) {
 			return s.next();
 		} else {
-			throw new java.io.IOException("output of execCmd is empty string\nCheck your js script");
+			LOGGER.log(Level.FINEST, "[ERROR] output of execCmd is empty string. Check your js script" );
+			throw new java.io.IOException("output of execCmd is empty string. Check your js script");
 		}
 	}
 
 	/**
-	 * Replaces common label punctuations used in the field title
+	 * Replaces common label punctuations used in the field title and strip Accents
 	 *
 	 * @param text
 	 * @return String
