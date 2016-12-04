@@ -15,11 +15,13 @@ import org.openqa.selenium.WebElement;
  *
  * @author tilak
  */
-public class CheckBox extends Input {
+public class CheckBox extends Groupable {
 
 	
 	public CheckBox(Form f, Element ip) throws IOException, Exception {
 		super(f, ip, Input.FIELDTYPES.CHECKBOX_INPUT);
+
+
 	}
 
 	@Override

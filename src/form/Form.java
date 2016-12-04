@@ -5,13 +5,8 @@
  */
 package form;
 
-import form.inputs.Button;
-import form.inputs.CheckBox;
-import form.inputs.Email;
-import form.inputs.Password;
-import form.inputs.Radio;
-import form.inputs.Text;
-import form.inputs.TextArea;
+import form.inputs.*;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -26,8 +21,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 
 /**
  * Represents a form instance with many inputs and actions.
@@ -35,6 +28,7 @@ import org.openqa.selenium.WebElement;
  * @author tilak
  */
 public class Form {
+
 
 	public static enum METHODS {
 		GET, POST, PUT, DELETE
@@ -46,6 +40,7 @@ public class Form {
 	private final Form.METHODS form_method;
 	private final Element form_dom;
 	private ArrayList<Input> form_inputs;
+	private ArrayList<Group> input_groups;
 	private final String[] form_tokens;
 	private final HashMap<String, String> params;
 	private Button reset_button;
@@ -175,6 +170,28 @@ public class Form {
 			throw new IllegalArgumentException("form_dom must be of tagName type \"form\"");
 		}
 	}
+
+	public ArrayList<Group> getInputGroups() {
+		return this.input_groups;
+	}
+
+	/**
+	 * Finds the input name by name and type
+	 * @param name - form name tag value
+	 * @return
+	 */
+	public Group findGroupByName(String class_name, String name){
+
+		for (Group i : this.input_groups){
+			if(i.getClass().getCanonicalName().equals(class_name) && i.getName().equals(name)){
+				return i;
+			}
+		}
+
+		return null;
+	}
+
+
 
 	/**
 	 * Extracts and returns form method
