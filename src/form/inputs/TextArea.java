@@ -22,9 +22,9 @@ public class TextArea extends Input {
 	}
 
 	@Override
-	public void fill(String val) {
+	public void fill() {
 		WebElement e = this.getWebElement();
-		e.sendKeys(val);
+		e.sendKeys("demo"); // TODO using demo value in TextArea
 		
 	}
 

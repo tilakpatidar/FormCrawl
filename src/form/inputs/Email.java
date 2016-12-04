@@ -22,10 +22,13 @@ public class Email extends Input {
 	}
 
 	@Override
-	public void fill(String val) {
+	public void fill() {
+		this.fillText("test"); // TODO Using demo value in fillText()
+	}
+
+	private void fillText(String val){
 		WebElement e = this.getWebElement();
 		e.sendKeys(val);
-		
 	}
 
 

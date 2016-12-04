@@ -23,7 +23,11 @@ public class Password extends Input {
 	}
 
 	@Override
-	public void fill(String value) {
+	public void fill() {
+		this.fillText("demo"); //TODO Using demo value in fillText()
+	}
+
+	private void fillText(String value){
 		WebElement e = this.getWebElement();
 		e.sendKeys(value);
 	}

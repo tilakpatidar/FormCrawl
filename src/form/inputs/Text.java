@@ -24,13 +24,16 @@ public class Text extends Input {
 	}
 
 	@Override
-	public void fill(String value) {
+	public void fill() {
+		this.fillText("demo"); //TODO Using ex value in fillText()
+		//System.out.println(e.getSize().getHeight() + "" + value);
+	}
+
+	private void fillText(String value){
 		WebElement e = this.getWebElement();
 		e.click();
 		e.clear();
 		e.sendKeys(value);
-		//System.out.println(e.getSize().getHeight() + "" + value);
 	}
-
 
 }

@@ -21,7 +21,7 @@ public class Hidden extends Input {
 	}
 
 	@Override
-	public void fill(String val) throws UnsupportedOperationException{
+	public void fill() throws UnsupportedOperationException{
 		
 		throw new UnsupportedOperationException("Hidden inputs cannot be filled");
 		

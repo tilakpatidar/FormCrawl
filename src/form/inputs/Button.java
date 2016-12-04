@@ -29,7 +29,11 @@ public class Button extends Input {
 	}
 
 	@Override
-	public void fill(String val) {
+	public void fill() {
+		this.clickButton();
+	}
+
+	private void clickButton(){
 		WebElement e = this.getWebElement();
 		e.click();
 	}

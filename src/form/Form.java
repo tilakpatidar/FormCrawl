@@ -162,17 +162,9 @@ public class Form {
 	}
 
 	private void fillForm() {
-		// TODO implement fillForm for all types
 		ArrayList<Input> i = this.getAssociatedInputs();
 		for (Input inp : i) {
-			if (inp instanceof Text) {
-				Text t = (Text) inp;
-				t.fill("tilakpatidar@gmail.com");
-			} else if (inp instanceof Email) {
-				Email e = (Email) inp;
-				e.fill("tilakpatidar@gmail.com");
-			}
-
+			inp.fill();
 		}
 	}
 

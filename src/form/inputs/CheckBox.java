@@ -23,7 +23,11 @@ public class CheckBox extends Input {
 	}
 
 	@Override
-	public void fill(String val) {
+	public void fill() {
+		this.clickCheckbox();
+	}
+
+	private void clickCheckbox(){
 		WebElement e = this.getWebElement();
 		e.click();
 	}

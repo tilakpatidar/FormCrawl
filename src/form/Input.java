@@ -166,10 +166,10 @@ public abstract class Input {
 	}
 
 	/**
-	 *
-	 * Fill the Input IS-A object with some value
+	 * Available in all Input types, to fill data.
+	 * Each input type overrides this and implement their own filling logic.
 	 */
-	public abstract void fill(String value);
+	public abstract void fill();
 
 	public static boolean findRequired(Element text_input) {
 		return text_input.hasAttr("required");

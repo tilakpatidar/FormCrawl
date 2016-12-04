@@ -44,7 +44,11 @@ public class Radio extends Input {
 	}
 
 	@Override
-	public void fill(String val) {
+	public void fill() {
+		this.clickRadio();
+	}
+
+	private void clickRadio(){
 		WebElement e = this.getWebElement();
 		e.click();
 	}
