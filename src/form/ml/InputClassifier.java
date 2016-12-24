@@ -13,16 +13,16 @@ import form.Input;
  */
 final public class InputClassifier extends BayesClassifier {
 
-	public final static String DATA_SET_PATH = "/home/tilak/NetBeansProjects/FormCrawl/corpus/inputs.arff";
-	public final static String STOP_WORD_PATH  = "/home/tilak/NetBeansProjects/FormCrawl/corpus/stopwords_en.txt";
+	public final static String DATA_SET_PATH = "./corpus/inputs.arff";
+	public final static String STOP_WORD_PATH  = "./corpus/stopwords_en.txt";
 	public static int CLASS_INDEX = 0;
-	
+
 
 	public InputClassifier() throws Exception{
 		super(InputClassifier.DATA_SET_PATH, InputClassifier.STOP_WORD_PATH, InputClassifier.CLASS_INDEX);
-		
+
 	}
-	
+
 	/**
 	 * Get an Input category
 	 * @param input_title
@@ -32,17 +32,17 @@ final public class InputClassifier extends BayesClassifier {
 	public Input.CATEGORIES getCategory(String input_title) throws Exception{
 		String label = super.classifyLabel(input_title);
 		return Input.CATEGORIES.valueOf(label);
-		
+
 	}
-	
+
 	public static void main(String[] args) throws Exception{
 		InputClassifier classifier = new InputClassifier();
 		System.out.println(classifier.getCategory("create new password"));
-		
-		
+
+
 	}
-	
-	
+
+
 	/**
 	 * Overriden, to forbid usage user getCategory instead
 	 * @param text
@@ -54,7 +54,7 @@ final public class InputClassifier extends BayesClassifier {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.);
 
 	}
-	
-	
-	
+
+
+
 }

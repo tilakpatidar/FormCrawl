@@ -53,17 +53,17 @@ public class BayesClassifier {
 	 */
 	private final WordTokenizer tokenizer;
 
-	
+
 	/**
 	 * Return the bayes classifier instances
 	 * @return weka.classifiers.Classifier
 	 */
-	
+
 	public Classifier getClassifier() {
 		return classifier;
 	}
 
-	
+
 	/**
 	 * Create bayes classifier instance
 	 * @param data_set_path
@@ -71,7 +71,7 @@ public class BayesClassifier {
 	 * @param class_index
 	 * @throws FileNotFoundException
 	 * @throws IOException
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public BayesClassifier(String data_set_path, String stop_words_path, int class_index) throws FileNotFoundException, IOException, Exception {
 
@@ -96,7 +96,7 @@ public class BayesClassifier {
 		 * generating the TF*IDF Vector
 		 */
 		trainFiltered = Filter.useFilter(train, wordVector);
-		
+
 		this.train();
 
 	}
@@ -123,7 +123,7 @@ public class BayesClassifier {
 	 * @throws java.lang.Exception
 	 */
 	public String classifyLabel(String text) throws Exception{
-		
+
 		String result;
 		Instance instance = makeInstance(text);
 		wordVector.input(instance);
@@ -162,7 +162,7 @@ public class BayesClassifier {
 	}
 
 	public static void main(String[] args) throws Exception {
-		BayesClassifier bs = new BayesClassifier("/home/tilak/NetBeansProjects/FormCrawl/corpus/inputs.arff", "/home/tilak/NetBeansProjects/FormCrawl/corpus/stopwords_en.txt", 0);
+		BayesClassifier bs = new BayesClassifier("./corpus/inputs.arff", "./corpus/stopwords_en.txt", 0);
 		bs.train();
 		System.out.println(bs.classifyLabel("enter your contact number"));
 
