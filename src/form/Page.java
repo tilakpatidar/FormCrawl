@@ -53,6 +53,7 @@ public final class Page {
 	private final ArrayList<Form> forms;
 	protected final URL url_value;
 	private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+        private static final String CHROME_DRIVER_PATH = "/Users/ptilak/bin/chromedriver";
 	private String page_source;
 	private Document soup;
 	private WebDriver driver;
@@ -69,6 +70,7 @@ public final class Page {
 	 * @throws Exception - Multiple exceptions can be anticipated
 	 */
 	public Page(String url_value) throws Exception {
+                System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
 		this.url_value = new URL(url_value);
 		this.forms = new ArrayList<Form>();
 
