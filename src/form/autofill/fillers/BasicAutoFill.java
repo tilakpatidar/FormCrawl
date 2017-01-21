@@ -7,7 +7,7 @@ import form.Form;
  */
 public class BasicAutoFill extends AutoFill {
 
-    public BasicAutoFill(Form f){
-        super(f);
-    }
+  public BasicAutoFill(Form f) {
+    super(f);
+  }
 }

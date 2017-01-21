@@ -7,7 +7,7 @@ import org.jsoup.nodes.Element;
  */
 public class Record {
 
-    public Record(Element e){
+  public Record(Element e) {
 
-    }
+  }
 }

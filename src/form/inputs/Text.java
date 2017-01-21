@@ -7,10 +7,11 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import java.io.IOException;
 import org.jsoup.nodes.Element;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+
+import java.io.IOException;
+
 /**
  * Text input implementation
  *
@@ -18,22 +19,20 @@ import org.openqa.selenium.WebElement;
  */
 public class Text extends Input {
 
-	public Text(Form f, Element ip) throws IOException, Exception {
-		super(f, ip, Input.FIELDTYPES.TEXT_INPUT);
-		
-	}
+  public Text(Form f, Element ip) throws IOException {
+    super(f, ip, Input.FIELDTYPES.TEXT_INPUT);
+  }
 
-	@Override
-	public void fill() {
-		this.fillText("demo"); //TODO Using ex value in fillText()
-		//System.out.println(e.getSize().getHeight() + "" + value);
-	}
+  @Override
+  public void fill() {
+    this.fillText("demo"); //TODO Using ex value in fillText()
+    //System.out.println(e.getSize().getHeight() + "" + value);
+  }
 
-	private void fillText(String value){
-		WebElement e = this.getWebElement();
-		e.click();
-		e.clear();
-		e.sendKeys(value);
-	}
-
+  private void fillText(String value) {
+    WebElement e = this.getWebElement();
+    e.click();
+    e.clear();
+    e.sendKeys(value);
+  }
 }

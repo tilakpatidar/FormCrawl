@@ -10,15 +10,16 @@ import java.util.ArrayList;
  */
 public abstract class AutoFill {
 
-    private final Form form;
-    private ArrayList<Record> records;
+  private final Form form;
+  private ArrayList<Record> records;
 
-    /**
-     * Public constructor to pass Form
-     * @param f
-     */
-    public AutoFill(Form f){
-        this.records = new ArrayList<Record>();
-        this.form = f;
-    }
+  /**
+   * Public constructor to pass Form
+   *
+   * @param f
+   */
+  public AutoFill(Form f) {
+    this.records = new ArrayList<Record>();
+    this.form = f;
+  }
 }

@@ -5,7 +5,7 @@ package form.inputs;
  */
 public class RadioGroup extends Group {
 
-    public RadioGroup(String name){
-        super(name, GROUP_TYPES.RADIO_GROUP);
-    }
+  public RadioGroup(String name) {
+    super(name, GROUP_TYPES.RADIO_GROUP);
+  }
 }

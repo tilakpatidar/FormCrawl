@@ -7,9 +7,11 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import java.io.IOException;
 import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebElement;
+
+import java.io.IOException;
+
 /**
  * Password input implementation
  *
@@ -17,20 +19,17 @@ import org.openqa.selenium.WebElement;
  */
 public class Password extends Input {
 
-	public Password(Form f, Element ip) throws IOException, Exception {
-		super(f, ip, Input.FIELDTYPES.PASSWORD_INPUT);
-		
-	}
+  public Password(Form f, Element ip) throws IOException {
+    super(f, ip, Input.FIELDTYPES.PASSWORD_INPUT);
+  }
 
-	@Override
-	public void fill() {
-		this.fillText("demo"); //TODO Using demo value in fillText()
-	}
+  @Override
+  public void fill() {
+    this.fillText("demo"); //TODO Using demo value in fillText()
+  }
 
-	private void fillText(String value){
-		WebElement e = this.getWebElement();
-		e.sendKeys(value);
-	}
-
-
+  private void fillText(String value) {
+    WebElement e = this.getWebElement();
+    e.sendKeys(value);
+  }
 }

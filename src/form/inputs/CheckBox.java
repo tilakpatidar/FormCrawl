@@ -7,9 +7,11 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import java.io.IOException;
 import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebElement;
+
+import java.io.IOException;
+
 /**
  * CheckBox input implementation
  *
@@ -17,22 +19,17 @@ import org.openqa.selenium.WebElement;
  */
 public class CheckBox extends Groupable {
 
-	
-	public CheckBox(Form f, Element ip) throws IOException, Exception {
-		super(f, ip, Input.FIELDTYPES.CHECKBOX_INPUT);
+  public CheckBox(Form f, Element ip) throws IOException {
+    super(f, ip, Input.FIELDTYPES.CHECKBOX_INPUT);
+  }
 
+  @Override
+  public void fill() {
+    this.clickCheckbox();
+  }
 
-	}
-
-	@Override
-	public void fill() {
-		this.clickCheckbox();
-	}
-
-	private void clickCheckbox(){
-		WebElement e = this.getWebElement();
-		e.click();
-	}
-
-
+  private void clickCheckbox() {
+    WebElement e = this.getWebElement();
+    e.click();
+  }
 }

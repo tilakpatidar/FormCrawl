@@ -7,8 +7,10 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import java.io.IOException;
 import org.jsoup.nodes.Element;
+
+import java.io.IOException;
+
 /**
  * Hidden input implementation
  *
@@ -16,42 +18,39 @@ import org.jsoup.nodes.Element;
  */
 public class Hidden extends Input {
 
-	public Hidden(Form f, Element ip) throws IOException, Exception {
-		super(f, ip, Input.FIELDTYPES.HIDDEN_INPUT);
-	}
+  public Hidden(Form f, Element ip) throws IOException, Exception {
+    super(f, ip, Input.FIELDTYPES.HIDDEN_INPUT);
+  }
 
-	@Override
-	public void fill() throws UnsupportedOperationException{
-		
-		throw new UnsupportedOperationException("Hidden inputs cannot be filled");
-		
-	}
-	
-	@Override
-	public String getTitle() {
-		return this.getName();
-	}
+  @Override
+  public void fill() throws UnsupportedOperationException {
 
-	/**
-	 * Returns placeholder for element
-	 *
-	 * @return
-	 */
-	@Override
-	public String getPlaceHolder() {
-		return this.getName();
-	}
+    throw new UnsupportedOperationException("Hidden inputs cannot be filled");
+  }
 
-	@Override
-	public ORIENTATIONS getOrientation() {
-		return null;
-	}
+  @Override
+  public String getTitle() {
+    return this.getName();
+  }
 
-	@Override
-	public boolean isRequired() {
-		return true;
-	}
+  /**
+   * Returns placeholder for element
+   *
+   * @return
+   */
+  @Override
+  public String getPlaceHolder() {
+    return this.getName();
+  }
 
+  @Override
+  public ORIENTATIONS getOrientation() {
+    return null;
+  }
 
+  @Override
+  public boolean isRequired() {
+    return true;
+  }
 }
 
