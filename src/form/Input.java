@@ -12,6 +12,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
@@ -150,7 +151,10 @@ public abstract class Input {
    * @return WebElement
    */
   public WebElement getWebElement() {
-    return this.web_element;
+    Page associatedPage = this.getAssociatedForm().getAssociatedPage();
+    By cssSelector = By.cssSelector(this.css_selector);
+    WebDriver driver = associatedPage.getDriver();
+    return driver.findElement(cssSelector);
   }
   /**
    * For getting the category of the input for suggestion engine

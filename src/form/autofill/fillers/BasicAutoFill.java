@@ -1,13 +1,18 @@
 package form.autofill.fillers;
 
 import form.Form;
+import form.Input;
 
-/**
- * Created by tilak on 4/12/16.
- */
+import java.util.ArrayList;
+
 public class BasicAutoFill extends AutoFill {
 
-  public BasicAutoFill(Form f) {
-    super(f);
+  @Override
+  public void fill() {
+    Form form = super.getForm();
+    ArrayList<Input> i = form.getAssociatedInputs();
+    for (Input inp : i) {
+      inp.fill();
+    }
   }
 }

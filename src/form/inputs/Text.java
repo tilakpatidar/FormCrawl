@@ -12,6 +12,8 @@ import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
 
+import static form.Input.FIELDTYPES.TEXT_INPUT;
+
 /**
  * Text input implementation
  *
@@ -19,8 +21,8 @@ import java.io.IOException;
  */
 public class Text extends Input {
 
-  public Text(Form f, Element ip) throws IOException {
-    super(f, ip, Input.FIELDTYPES.TEXT_INPUT);
+  public Text(Form form, Element element) throws IOException {
+    super(form, element, TEXT_INPUT);
   }
 
   @Override

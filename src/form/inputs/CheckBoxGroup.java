@@ -1,11 +1,10 @@
 package form.inputs;
 
-/**
- * Created by tilak on 4/12/16.
- */
-public class CheckBoxGroup extends Group {
+import static form.inputs.Group.GROUP_TYPES.CHECKBOX_GROUP;
 
-  public CheckBoxGroup(String name) {
-    super(name, GROUP_TYPES.CHECKBOX_GROUP);
+class CheckBoxGroup extends Group {
+
+  CheckBoxGroup(String name) {
+    super(name, CHECKBOX_GROUP);
   }
 }

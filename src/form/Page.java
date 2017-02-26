@@ -55,7 +55,7 @@ public final class Page {
    * @throws InvalidObjectException - When driver is not instance of
    *                                JavascriptExecutor
    */
-  public Page(String pageUrl) throws MalformedURLException, FileNotFoundException, InvalidObjectException {
+  public Page(String pageUrl) throws Exception {
     System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
     this.pageUrl = new URL(pageUrl);
     this.forms = new ArrayList<>();
@@ -206,10 +206,10 @@ public final class Page {
     int x, y, w, h;
 
     Point up = element.getLocation();
-    y = element.getLocation().getY() - 55; //font size is 32 px default
+    y = element.getLocation().getY() - 35; //font size is 32 px default
     x = up.getX() - 5;
-    w = element.getSize().getWidth() + 10;
-    h = 95;
+    w = element.getSize().getWidth() + 200;
+    h = element.getSize().getHeight() + 200;
 
     LOGGER.log(Level.FINEST, "[DEBUG] " + x + "" + y + " " + w + " " + h);
     return this.getElementScreenShot(input, x, y, w, h);

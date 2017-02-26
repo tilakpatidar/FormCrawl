@@ -5,6 +5,8 @@
  */
 package form;
 
+import form.autofill.fillers.AutoFill;
+import form.autofill.fillers.BasicAutoFill;
 import form.inputs.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -26,6 +28,7 @@ import java.util.logging.Logger;
 public class Form {
 
   private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+  private static final Class<BasicAutoFill> FILL_CLASS = BasicAutoFill.class;
   private final Page page;
 
   private final Form.METHODS form_method;
@@ -128,12 +131,12 @@ public class Form {
     return this.formTokens;
   }
 
-  private ArrayList<Input> getAssociatedInputs() {
+  public ArrayList<Input> getAssociatedInputs() {
     return this.form_inputs;
   }
 
-  void submitForm() {
-    this.fillForm();
+  void submitForm() throws Exception {
+    this.fillForm(FILL_CLASS);
     Button b = this.getSubmitButton();
     b.getWebElement().click();
   }
@@ -142,11 +145,10 @@ public class Form {
     return this.submitButton;
   }
 
-  private void fillForm() {
-    ArrayList<Input> i = this.getAssociatedInputs();
-    for (Input inp : i) {
-      inp.fill();
-    }
+  private void fillForm(Class<? extends AutoFill> T) throws Exception {
+    AutoFill filler = T.newInstance();
+    filler.init(this);
+    filler.fill();
   }
 
   private void checkValidFormDom(Element formDom) {
