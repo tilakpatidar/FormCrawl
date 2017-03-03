@@ -1,13 +1,16 @@
 package form.autofill.data;
 
-import org.jsoup.nodes.Element;
+import java.util.HashMap;
 
 /**
- * Represents rows returned from form crawls.
+ * Represents a tuple of data with key as css selector and value as
+ * form value
  */
-public class Record {
-
-  public Record(Element e) {
-
+public class Record extends HashMap<String, String> {
+  public Record(){
+    super();
+    super.put("#user_email", "tilakpatidar@gmail.com");
+    super.put("#user_login", "tilakpatidar");
+    super.put("#user_password", "tilakpatidar@");
   }
 }

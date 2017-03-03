@@ -48,7 +48,7 @@ function preventAll(parent) {
     }
     var fr = frames;
     for (var i = 0, l = fr.length; i < l; i++) {
-        // cancell frames events here
+        // cancel frames events here
     }
 
 
@@ -113,6 +113,7 @@ window.restoreOldDom = function () {
     });
     allowAll(document);
     document.write(window.old_dom);
+    location.reload();
     
 };
 

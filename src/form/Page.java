@@ -140,7 +140,7 @@ public final class Page {
     }
   }
 
-  WebDriver getDriver() {
+  public WebDriver getDriver() {
     return this.driver;
   }
 

@@ -25,7 +25,7 @@ public class Button extends Input {
 
   ;
   @Override
-  public void fill() {
+  public void fill(String s) {
     this.clickButton();
   }
   private void clickButton() {

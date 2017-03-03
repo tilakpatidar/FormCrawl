@@ -5,22 +5,18 @@
  */
 package form.ml;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.NaiveBayes;
-import weka.core.converters.ArffLoader.ArffReader;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.converters.ArffLoader.ArffReader;
 import weka.core.tokenizers.WordTokenizer;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.StringToWordVector;
+
+import java.io.*;
 
 /**
  * Create a classifier for inputs.
@@ -166,6 +162,6 @@ public class BayesClassifier {
   public static void main(String[] args) throws Exception {
     BayesClassifier bs = new BayesClassifier("./corpus/inputs.arff", "./corpus/stopwords_en.txt", 0);
     bs.train();
-    System.out.println(bs.classifyLabel("enter your contact number"));
+    System.out.println(bs.classifyLabel(""));
   }
 }

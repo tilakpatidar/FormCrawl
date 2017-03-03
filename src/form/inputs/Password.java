@@ -24,7 +24,7 @@ public class Password extends Input {
   }
 
   @Override
-  public void fill() {
+  public void fill(String s) {
     this.fillText("demo"); //TODO Using demo value in fillText()
   }
 

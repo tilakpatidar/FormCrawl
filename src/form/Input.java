@@ -200,8 +200,10 @@ public abstract class Input {
   /**
    * Available in all Input types, to fill data.
    * Each input type overrides this and implement their own filling logic.
+   *
+   * @param s
    */
-  public abstract void fill();
+  public abstract void fill(String s);
   private String findPlaceHolder() {
     if (this.getType().equals(Input.FIELDTYPES.TEXT_INPUT) || this.getType().equals(Input.FIELDTYPES.TEXTAREA_INPUT)) {
       return this.getElement().attr("placeholder");

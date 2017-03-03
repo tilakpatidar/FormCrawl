@@ -9,7 +9,7 @@ import java.util.ArrayList;
  */
 public abstract class Group {
 
-  private ArrayList<Input> inps;
+  private ArrayList<Input> inps = new ArrayList<>();
   private Group.GROUP_TYPES type;
   private String name;
 

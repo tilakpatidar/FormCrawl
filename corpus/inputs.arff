@@ -1,6 +1,6 @@
 @relation input
 
-@attribute category {EMAIL, JOB_SEARCH, NAME, AGE, DOB, GENDER, DESC, PASSWORD, STATE, CITY, NATIONALITY, COUNTRY, CONTACT, ADDRESS, PIN_CODE, USERNAME, T_AND_C }
+@attribute category {EMAIL, JOB_SEARCH, NAME, AGE, DOB, GENDER, DESC, PASSWORD, STATE, CITY, NATIONALITY, COUNTRY, CONTACT, ADDRESS, PIN_CODE, USERNAME, T_AND_C, MOVIE_TITLE_TYPE }
 @attribute text string
 
 @data
@@ -67,3 +67,14 @@ USERNAME,'username'
 T_AND_C,'i accept terms and conditions'
 T_AND_C,'i accept'
 T_AND_C,'terms and conditions'
+MOVIE_TITLE_TYPE,'Feature Film'
+MOVIE_TITLE_TYPE,'TV Movie'
+MOVIE_TITLE_TYPE,'TV Series'
+MOVIE_TITLE_TYPE,'TV Episode'
+MOVIE_TITLE_TYPE,'TV Special'
+MOVIE_TITLE_TYPE,'Mini-Series'
+MOVIE_TITLE_TYPE,'Documentary'
+MOVIE_TITLE_TYPE,'Video Game'
+MOVIE_TITLE_TYPE,'Short Film'
+MOVIE_TITLE_TYPE,'Video'
+MOVIE_TITLE_TYPE,'TV Short'

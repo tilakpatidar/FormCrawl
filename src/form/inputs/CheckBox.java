@@ -24,12 +24,17 @@ public class CheckBox extends Groupable {
   }
 
   @Override
-  public void fill() {
+  public void fill(String s) {
     this.clickCheckbox();
   }
 
   private void clickCheckbox() {
-    WebElement e = this.getWebElement();
-    e.click();
+    try{
+      WebElement e = this.getWebElement();
+      e.click();
+    }catch (Exception e){
+      System.out.println(this.getCSSSelector());
+    }
+
   }
 }

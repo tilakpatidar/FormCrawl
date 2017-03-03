@@ -35,9 +35,10 @@ public class Select extends Input {
 
   /**
    * Select the option with the text matching the value attr.
+   * @param s
    */
   @Override
-  public void fill() {
+  public void fill(String s) {
     WebElement e = this.getWebElement();
     this.select_element.selectByValue("sdfs"); // TODO using default value in select
   }

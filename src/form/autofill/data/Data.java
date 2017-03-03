@@ -59,7 +59,7 @@ public class Data {
 
     int i = 0;
     for (Element record : records) {
-      recs[i] = new Record(record);
+      recs[i] = new Record();
       ++i;
     }
 

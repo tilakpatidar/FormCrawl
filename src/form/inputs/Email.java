@@ -24,7 +24,7 @@ public class Email extends Input {
   }
 
   @Override
-  public void fill() {
+  public void fill(String s) {
     this.fillText("test"); // TODO Using demo value in fillText()
   }
 

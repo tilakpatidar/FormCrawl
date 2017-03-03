@@ -1,7 +1,11 @@
 package form.autofill.suggesters;
 
-/**
- * Created by tilak on 4/12/16.
- */
-public class BasicSuggester {
+import form.autofill.data.Record;
+
+public class BasicSuggester extends Suggester {
+  @Override
+  public Record getSuggestedRecord() {
+    //TODO suggest a record
+    return new Record();
+  }
 }

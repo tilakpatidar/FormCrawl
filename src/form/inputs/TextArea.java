@@ -24,7 +24,7 @@ public class TextArea extends Input {
   }
 
   @Override
-  public void fill() {
+  public void fill(String s) {
     WebElement e = this.getWebElement();
     e.sendKeys("demo"); // TODO using demo value in TextArea
   }

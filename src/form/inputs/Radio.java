@@ -43,7 +43,7 @@ public class Radio extends Input {
   }
 
   @Override
-  public void fill() {
+  public void fill(String s) {
     this.clickRadio();
   }
 

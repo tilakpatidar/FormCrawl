@@ -26,9 +26,8 @@ public class Text extends Input {
   }
 
   @Override
-  public void fill() {
-    this.fillText("demo"); //TODO Using ex value in fillText()
-    //System.out.println(e.getSize().getHeight() + "" + value);
+  public void fill(String value) {
+    this.fillText(value);
   }
 
   private void fillText(String value) {

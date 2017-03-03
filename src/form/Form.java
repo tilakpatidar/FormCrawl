@@ -6,13 +6,19 @@
 package form;
 
 import form.autofill.fillers.AutoFill;
-import form.autofill.fillers.BasicAutoFill;
+import form.autofill.fillers.RandomAutoFill;
+import form.autofill.suggesters.RandomSuggester;
+import form.autofill.suggesters.Suggester;
 import form.inputs.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,7 +34,8 @@ import java.util.logging.Logger;
 public class Form {
 
   private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-  private static final Class<BasicAutoFill> FILL_CLASS = BasicAutoFill.class;
+  private static final Class<RandomAutoFill> FILL_CLASS = RandomAutoFill.class;
+  private static final Class<RandomSuggester> SUGGESTER_CLASS = RandomSuggester.class;
   private final Page page;
 
   private final Form.METHODS form_method;
@@ -36,7 +43,7 @@ public class Form {
   private final String[] formTokens;
   private final HashMap<String, String> params;
   private ArrayList<Input> form_inputs;
-  private ArrayList<Group> inputGroups;
+  private ArrayList<Group> inputGroups = new ArrayList<>();
   private Button resetButton;
   private Button submitButton;
   /**
@@ -136,9 +143,24 @@ public class Form {
   }
 
   void submitForm() throws Exception {
+    WebDriver driver = this.getAssociatedPage().getDriver();
     this.fillForm(FILL_CLASS);
     Button b = this.getSubmitButton();
     b.getWebElement().click();
+    WebElement resultsDiv;
+    while (true) {
+      try {
+        resultsDiv = driver.findElement(By.id("inner_results_div"));
+        break;
+      } catch (NoSuchElementException e) {
+        System.out.println(e.getMessage());
+      }
+      Thread.sleep(5000);
+    }
+    String html = resultsDiv.getAttribute("outerHTML");
+    String text = resultsDiv.getText();
+    System.out.println(html);
+    System.out.println(text);
   }
 
   private Button getSubmitButton() {
@@ -147,8 +169,9 @@ public class Form {
 
   private void fillForm(Class<? extends AutoFill> T) throws Exception {
     AutoFill filler = T.newInstance();
+    Suggester suggester = SUGGESTER_CLASS.newInstance();
     filler.init(this);
-    filler.fill();
+    filler.fill(suggester);
   }
 
   private void checkValidFormDom(Element formDom) {
@@ -279,9 +302,9 @@ public class Form {
             inp = new Text(this, ip);
             break;
           default:
-            LOGGER.log(Level.INFO, "[FAIL] Undefined input detected");
-            LOGGER.log(Level.FINEST, "[ERROR] nothing in switch case matches " + input_type);
-            throw new RuntimeException("Undefined input detected");
+            inp = new Text(this, ip);
+            break;
+          //default input type in html is text box
         }
         break;
 
@@ -317,9 +340,8 @@ public class Form {
         inp = new TextArea(this, ip);
         break;
       default:
-        LOGGER.log(Level.INFO, "[FAIL] Undefined input detected");
-        LOGGER.log(Level.FINEST, "[ERROR] nothing in switch case matches " + tag_name);
-        throw new RuntimeException("Undefined input detected");
+        inp = new Text(this, ip);
+        //default input in HTML is text box
     }
 
     return inp;
@@ -332,6 +354,10 @@ public class Form {
   }
   public String toString() {
     return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+  }
+  public Input findByCSSSelector(String selector) {
+    return this.getAssociatedInputs().stream().filter((input) -> input
+        .getCSSSelector().equals(selector)).findFirst().get();
   }
 
   public enum METHODS {
