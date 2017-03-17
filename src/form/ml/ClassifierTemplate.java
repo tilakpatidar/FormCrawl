@@ -163,7 +163,7 @@ public class ClassifierTemplate {
     bs.train();
     System.out.println(bs.classifyLabel("please enter your password"));
   }
-  public void setClassifier(Classifier classifier) {
+  protected void setClassifier(Classifier classifier) {
     this.classifier = classifier;
   }
 }

@@ -27,7 +27,7 @@ public class LRClassifier extends ClassifierTemplate {
    * @throws IOException
    * @throws Exception
    */
-  private LRClassifier() throws Exception {
+  public LRClassifier() throws Exception {
     super(DATA_SET_PATH, STOP_WORD_PATH, CLASS_INDEX);
     super.setClassifier(new NaiveBayes());
     super.train();

@@ -5,6 +5,7 @@
  */
 package form;
 
+import form.ml.LRClassifier;
 import formcrawl.FormCrawl;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -17,6 +18,7 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -62,7 +64,7 @@ public final class Page {
 
     this.processSeleniumChoice();
     this.removeCSS();
-    this.createDOM();
+    this.soup = Page.createDOM(this.pageSource);
     this.findForms();
 
     //restoring old dom once page object is created
@@ -92,11 +94,12 @@ public final class Page {
   /**
    * Creates and filter HTML DOM elements.
    */
-  private void createDOM() {
-    this.pageSource = this.pageSource.trim().replaceAll("(\\n+)|(\\t+)|(\\s+)|(\\r+)", " ").replaceAll("\\s+", " ");
-    this.soup = Jsoup.parse(this.pageSource);
-    this.soup.select("script, style, head, .hidden, noscript, img, iframe, header, footer, br, code, nav").remove();
+  protected static Document createDOM(String pageSource) {
+    pageSource = pageSource.trim().replaceAll("(\\n+)|(\\t+)|(\\s+)|(\\r+)", " ").replaceAll("\\s+", " ");
+    Document soup = Jsoup.parse(pageSource);
+    soup.select("script, style, head, .hidden, noscript, img, iframe, header, footer, br, code, nav").remove();
     LOGGER.log(Level.INFO, "[INFO] HTML source filtered");
+    return soup;
   }
 
   private void findForms() {
@@ -109,6 +112,13 @@ public final class Page {
       //create form objects
       try {
         LOGGER.log(Level.INFO, "[INFO] creating form {0}", i);
+        String formText = Form.getTextForClassification(form, this);
+        LRClassifier classifier = new LRClassifier();
+        String label = classifier.classifyLabel(formText);
+        if(!label.equals("s")){
+          JOptionPane.showMessageDialog(null, "Form is not a searchable");
+          System.exit(0);
+        }
         Form f = new Form(this, form);
         this.forms.add(f);
       } catch (Exception e) {

@@ -37,7 +37,7 @@ public class FormCrawl extends javax.swing.JFrame {
   private javax.swing.JScrollPane jScrollPane1;
   public FormCrawl() {
     initComponents();
-
+    URLField.setText("http://localhost/imdb.html");
     try {
       MyLogger.setup(LoggerTextArea);
     } catch (IOException e) {

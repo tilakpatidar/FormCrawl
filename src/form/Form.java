@@ -13,6 +13,7 @@ import form.inputs.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
@@ -23,8 +24,10 @@ import org.openqa.selenium.WebElement;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Represents a form instance with many inputs and actions.
@@ -362,5 +365,38 @@ public class Form {
 
   public enum METHODS {
     GET, POST, PUT, DELETE
+  }
+
+  public static String getTextForClassification(Element formElement, Page page) {
+    String html_data = formElement.html();
+    Document document = Page.createDOM(html_data);
+    String pageTitle = page.getDriver().getTitle();
+    String formText = document.text();
+    List<String> placeHolders = document.getElementsByAttribute("placeholder").stream().map((e) -> e.attr("placeholder")).collect(Collectors.toList());
+
+    List<String> names = document.getElementsByAttribute("name").stream().map((e) -> e.attr("name")).collect(Collectors.toList());
+    List<String> btn_text = document.select("input[type='submit']").stream().map((e) -> e.attr("value")).collect(Collectors.toList());
+    List<String> labelText = document.select("label").stream().map((e) -> e.text()).collect(Collectors.toList());
+
+    String text = pageTitle + " " + formText + " " +
+        concatList(placeHolders) + " " + concatList(names) + " " + concatList(btn_text) + " " + concatList(labelText);
+
+    String camelCaseStr = text.replaceAll("(\\n+)|(\\t+)|(\\s+)|(\\r+)", " ").replaceAll("[^a-zA-Z\\s]", "").toLowerCase();
+
+    ArrayList<String> tokens = splitCamelCaseString(camelCaseStr);
+    return tokens.stream().reduce((a, b) -> a + " " + b ).orElse("").replaceAll("\\s+", " ");
+
+  }
+
+  private static String concatList(List<String> li) {
+    return li.stream().reduce((a, b) -> a + " " + b).orElse("");
+  }
+
+  private static ArrayList<String> splitCamelCaseString(String s){
+    ArrayList<String> result = new ArrayList<>();
+    for (String w : s.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
+      result.add(w);
+    }
+    return result;
   }
 }
