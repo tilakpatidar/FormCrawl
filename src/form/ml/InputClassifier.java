@@ -6,13 +6,14 @@
 package form.ml;
 
 import form.Input;
+import weka.classifiers.bayes.NaiveBayes;
 
 /**
- * BayesClassifier for input labels
+ * ClassifierTemplate for input labels
  *
  * @author tilak
  */
-final public class InputClassifier extends BayesClassifier {
+final public class InputClassifier extends ClassifierTemplate {
 
   public final static String DATA_SET_PATH = "./corpus/inputs.arff";
   public final static String STOP_WORD_PATH = "./corpus/stopwords_en.txt";
@@ -20,6 +21,8 @@ final public class InputClassifier extends BayesClassifier {
 
   public InputClassifier() throws Exception {
     super(InputClassifier.DATA_SET_PATH, InputClassifier.STOP_WORD_PATH, InputClassifier.CLASS_INDEX);
+    super.setClassifier(new NaiveBayes());
+    super.train();
   }
   public static void main(String[] args) throws Exception {
     InputClassifier classifier = new InputClassifier();
