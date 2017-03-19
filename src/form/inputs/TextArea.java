@@ -7,10 +7,11 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
+
+import static form.util.SeleniumUtil.getAttr;
 
 /**
  * TextArea input implementation
@@ -19,8 +20,9 @@ import java.io.IOException;
  */
 public class TextArea extends Input {
 
-  public TextArea(Form f, Element ip) throws IOException {
-    super(f, ip, Input.FIELDTYPES.TEXTAREA_INPUT);
+  public TextArea(Form f, WebElement ip) throws IOException {
+    super(f, ip, FIELD_TYPES.TEXTAREA_INPUT);
+    super.placeholder = getAttr(webElement, "placeholder");
   }
 
   @Override

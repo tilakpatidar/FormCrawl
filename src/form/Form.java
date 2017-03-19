@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package form;
 
 import form.autofill.fillers.AutoFill;
@@ -10,135 +5,218 @@ import form.autofill.fillers.RandomAutoFill;
 import form.autofill.suggesters.RandomSuggester;
 import form.autofill.suggesters.Suggester;
 import form.inputs.*;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
+import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Represents a form instance with many inputs and actions.
- *
- * @author tilak
- */
+import static form.Input.setLabel;
+import static form.util.SeleniumUtil.*;
+import static form.util.TextUtil.*;
+
 public class Form {
 
-  private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
   private static final Class<RandomAutoFill> FILL_CLASS = RandomAutoFill.class;
   private static final Class<RandomSuggester> SUGGESTER_CLASS = RandomSuggester.class;
   private final Page page;
 
-  private final Form.METHODS form_method;
-  private final Element formDom;
-  private final String[] formTokens;
-  private final HashMap<String, String> params;
+  private final WebElement formDom;
   private ArrayList<Input> form_inputs;
   private ArrayList<Group> inputGroups = new ArrayList<>();
-  private Button resetButton;
+  private HashMap<Input, WebElement> inputToWebElement = new HashMap<>();
+  private HashMap<WebElement, Input> webElementToInput = new HashMap<>();
   private Button submitButton;
-  /**
-   * Accepts JSOUP form element
-   *
-   * @param page    - Page object
-   * @param formDom - JSOUP form element
-   */
-  public Form(Page page, Element formDom) {
 
-    LOGGER.info("[START] Creating instance of Form");
-    this.checkValidFormDom(formDom);
-    this.params = new HashMap<>();
+  public Form(Page page, WebElement formDom) {
+
     this.page = page;
     this.formDom = formDom;
-    this.form_method = this.extractFormMethod();
 
-    String form_text = Input.filter_label(this.formDom.text());
-    String[] keywords = StringUtils.splitPreserveAllTokens(form_text);
-
-    int index = 0;
-    for (String keyword : keywords) {
-      keywords[index] = Input.filter_label(keyword);
-      index++;
-    }
-
-    this.formTokens = keywords;
-
-    LOGGER.log(Level.INFO, "[DONE] Form action and method detected");
-
-    //creating instances of Inputs
-    Elements input_collection = Form.detectFields(this.formDom);
+    ArrayList<WebElement> input_collection = Form.detectFields(this.formDom);
+    System.out.println("Web Elements detected from form DOM");
     this.form_inputs = new ArrayList<>();
 
-    LOGGER.log(Level.INFO, "[DONE] Found {0} inputs", input_collection.size());
-
-    int count = 1;
-    for (Element input : input_collection) {
+    for (WebElement input : input_collection) {
       try {
-        LOGGER.log(Level.INFO, "[START] Create Input instance {0}", count);
         Input input_obj = this.detectInput(input);
+        inputToWebElement.put(input_obj, input_obj.getWebElement());
+        webElementToInput.put(input_obj.getWebElement(), input_obj);
         this.form_inputs.add(input_obj);
-        LOGGER.log(Level.FINER, input_obj.toString());
         if (input_obj instanceof Button) {
-          LOGGER.log(Level.FINER, "[FINER] Button instance detected");
           Button b = (Button) input_obj;
           if (b.getButtonType().equals(Button.TYPES.SUBMIT)) {
-            LOGGER.log(Level.FINER, "[FINER] Button is submit");
             this.submitButton = b;
-          } else if (b.getButtonType().equals(Button.TYPES.RESET)) {
-            LOGGER.log(Level.FINER, "[FINER] Button is reset");
-            this.resetButton = b;
+            System.out.println("Submit button detected");
           }
         }
-        LOGGER.log(Level.INFO, "[DONE] Created Input instance {0}", count);
-        this.page.createTooltip(input_obj.getWebElement(), input_obj.getTooltipData());
+        // this.page.createTooltip(input_obj.getWebElement(), input_obj.getTooltipData());
       } catch (Exception e) {
-        LOGGER.log(Level.INFO, "[FAIL] Create Input instance {0}", count);
-        LOGGER.log(Level.FINEST, "[ERROR]", e);
+        e.printStackTrace();
       }
-      count += 1;
     }
+
+    associateLabelsAndFields();
 
     if (this.submitButton == null) {
-      LOGGER.log(Level.INFO, "[FAIL] No submit button present abort form creation");
       throw new RuntimeException("No submit button present");
     }
-
-    LOGGER.log(Level.INFO, "[DONE] Created {0} Input objects", form_inputs.size());
-
-    LOGGER.log(Level.FINER, this.toString());
   }
-  private static Elements detectFields(Element form_dom) {
+  private void associateLabelsAndFields() {
+    Set<Map.Entry<WebElement, Input>> pairs = webElementToInput.entrySet();
+    List<WebElement> labelsWithoutFor = filterLabelWhichHaveForAttr(pairs);
+    for (Map.Entry<WebElement, Input> pair : pairs) {
+      WebElement field = pair.getKey();
+      Input input = pair.getValue();
+      if (fieldIsAButton(field, input)) {
+        continue;
+      }
+      WebElement goodLabel = null;
+      int minDist = 99999;
+      boolean foundEarlierMatch = false;
 
-    Elements input_collection = new Elements();
+      for (WebElement label : labelsWithoutFor) {
+        Point labelPoint = getPointFor(label);
+        Point fieldPoint = getPointFor(field);
+        String labelText = getLabelTextFor(label);
+        String fieldId = getAttr(field, "id");
+
+        //check if same parent and only text
+        WebElement labelParent = getParent(label);
+        WebElement fieldParent = getParent(field);
+        if (labelParent.equals(fieldParent)) {
+          if (filterText(getLabelTextFor(labelParent)).equals(filterText(labelText))) {
+            setLabel(input, labelText);
+            labelsWithoutFor.remove(label);
+            foundEarlierMatch = true;
+            break;
+          }
+        }
+
+        if (comparablePoint(labelPoint, fieldPoint)) {
+          int distance = calculateDist(labelPoint, fieldPoint);
+          int angle = angleBetween2Lines(labelPoint, fieldPoint);
+          if (angleNear90Multiples(angle) && distance < minDist) {
+            goodLabel = label;
+            minDist = distance;
+//            System.out.printf("accepted %d  %s  |  %s%n", angle, fieldId, labelText);
+          } else {
+//            System.out.printf("rejected %d  %s  |  %s%n", angle, fieldId, labelText);
+          }
+        } else {
+//          System.out.printf("rejected dist   %s  |  %s%n", fieldId, labelText);
+        }
+      }
+
+      if (!foundEarlierMatch && goodLabel != null) {
+        String labelText = getLabelTextFor(goodLabel);
+        setLabel(input, labelText);
+        labelsWithoutFor.remove(goodLabel);
+      }
+    }
+  }
+
+  private List<WebElement> filterLabelWhichHaveForAttr(Set<Map
+      .Entry<WebElement, Input>> pairs) {
+    WebElement formElement = this.getElement();
+    List<WebElement> labels = getElementsByTagName(formElement, "label");
+    return labels.stream().filter(label -> {
+      //search if dev used a label[for=]
+      String labelText = getLabelTextFor(label);
+      String fieldId = getAttr(label, "for");
+      if (fieldId != null) {
+        WebElement fieldElement = this.getElement().findElement(By.id(fieldId));
+        Input input = webElementToInput.get(fieldElement);
+        setLabel(input, labelText);
+        Map.Entry<WebElement,Input> entry =
+            new AbstractMap.SimpleEntry<>(fieldElement, input);
+        System.out.println(pairs.remove(entry));
+        return false;
+      }
+      return true;
+    }).collect(Collectors.toList());
+  }
+  private boolean fieldIsAButton(WebElement field, Input input) {
+    if (isFieldButton(field)) {
+      setLabel(input, getLabelTextFor(field));
+      return true;
+    }
+    if (isFieldInputButton(field)) {
+      setLabel(input, getAttr(field, "value"));
+      return true;
+    }
+    return false;
+  }
+
+  public static int angleBetween2Lines(Point labelLocation, Point
+      fieldLocation) {
+    Point basePoint = new Point(fieldLocation.x + 10, fieldLocation.y);
+    float angle1 = (float) Math.atan2(fieldLocation.y - labelLocation.y, labelLocation.x
+        - fieldLocation.x);
+    float angle2 = (float) Math.atan2(basePoint.y - fieldLocation.y, fieldLocation.x
+        - basePoint.x);
+    float calculatedAngle = (float) Math.toDegrees(angle1 - angle2);
+    if (calculatedAngle < 0) calculatedAngle += 360;
+    return (int) calculatedAngle;
+  }
+
+  public static boolean angleNear90Multiples(int angle) {
+    int[] multiples = {0, 90, 180, 270, 360};
+    double comparableWithinPercentage = 7.0 / 100.0;
+    for (int multiple : multiples) {
+      if (comparableNum(angle, multiple, comparableWithinPercentage)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean comparablePoint(Point labelPoint, Point fieldPoint) {
+    double comparableWithinPercentage = 7.0 / 100.0;
+
+    double x = labelPoint.x;
+    double x1 = fieldPoint.x;
+    double y = labelPoint.y;
+    double y1 = fieldPoint.y;
+    boolean comparableX = comparableNum(x, x1, comparableWithinPercentage);
+    boolean comparableY = comparableNum(y, y1, comparableWithinPercentage);
+    return comparableX || comparableY;
+  }
+  private static boolean comparableNum(double x, double y, double
+      withinPercentage) {
+    double xComparision = Math.abs(1.0 - (x / y));
+    return xComparision <= withinPercentage;
+  }
+
+  private int calculateDist(Point first, Point second) {
+    int xDiff = second.x - first.x;
+    int yDiff = second.y - first.y;
+    int xDiffSq = (int) Math.pow(xDiff, 2);
+    int yDiffSq = (int) Math.pow(yDiff, 2);
+    int sum = xDiffSq + yDiffSq;
+    return (int) Math.sqrt(sum);
+  }
+  private static ArrayList<WebElement> detectFields(WebElement form_dom) {
+
+    ArrayList<WebElement> input_collection = new ArrayList<>();
     for (String tag : Input.VALID_INPUT_TAGS) {
-      input_collection.addAll(form_dom.getElementsByTag(tag));
+      input_collection.addAll(form_dom.findElements(By.tagName(tag)));
     }
 
-    Elements form_elements = new Elements();
+    ArrayList<WebElement> form_elements = new ArrayList<>();
 
-    for (Element e : input_collection) {
-
+    for (WebElement e : input_collection) {
       //not hidden element and element is part of valid input tags
-      if (!e.attr("type").toLowerCase().equals("hidden") && Input.VALID_INPUT_TAGS.contains(e.tagName())) {
+      String tagName = e.getTagName();
+      boolean hasValidTagName = Input.VALID_INPUT_TAGS.contains(tagName);
+      if (!isHiddenInputElement(e) && hasValidTagName) {
         form_elements.add(e);
       }
     }
     return form_elements;
-  }
-  String[] getFormTokens() {
-    return this.formTokens;
   }
 
   public ArrayList<Input> getAssociatedInputs() {
@@ -156,7 +234,7 @@ public class Form {
         resultsDiv = driver.findElement(By.id("inner_results_div"));
         break;
       } catch (NoSuchElementException e) {
-        System.out.println(e.getMessage());
+        e.printStackTrace();
       }
       Thread.sleep(5000);
     }
@@ -177,25 +255,10 @@ public class Form {
     filler.fill(suggester);
   }
 
-  private void checkValidFormDom(Element formDom) {
-    //check for type before construction
-    if (!formDom.tagName().equalsIgnoreCase("FORM")) {
-      LOGGER.log(Level.WARNING, "[FAIL] formDom must be of tagName type \"form\"");
-      throw new IllegalArgumentException("formDom must be of tagName type \"form\"");
-    }
-    LOGGER.info("[DONE] Dom checked for validation.");
-  }
-
   public ArrayList<Group> getInputGroups() {
     return this.inputGroups;
   }
 
-  /**
-   * Finds the input name by name and type
-   *
-   * @param name - form name tag value
-   * @return - Return a Group object
-   */
   public Group findGroupByName(String class_name, String name) {
 
     for (Group i : this.inputGroups) {
@@ -207,39 +270,13 @@ public class Form {
     return null;
   }
 
-  /**
-   * Extracts and returns form method
-   *
-   * @return - Returns form method type
-   */
-  private Form.METHODS extractFormMethod() {
-    String method = this.formDom.attr("method").toUpperCase();
-
-    LOGGER.log(Level.INFO, "[INFO] Form method type {0}", method);
-
-    switch (method) {
-      case "GET":
-        return Form.METHODS.GET;
-      case "POST":
-        return Form.METHODS.POST;
-      case "PUT":
-        return Form.METHODS.PUT;
-      case "DELETE":
-        return Form.METHODS.DELETE;
-      default:
-        //no matching method
-        return Form.METHODS.GET;
-      //The default method when submitting form data is GET. (from w3schools)
-
-    }
-  }
-  private Input detectInput(Element ip) throws IOException {
-    String tag_name = ip.tagName();
+  private Input detectInput(WebElement ip) throws IOException {
+    String tag_name = ip.getTagName();
     Input inp;
     Button bt;
     switch (tag_name) {
       case "input":
-        String input_type = ip.attr("type").toLowerCase();
+        String input_type = ip.getAttribute("type").toLowerCase();
         switch (input_type) {
           case "text":
             inp = new Text(this, ip);
@@ -312,10 +349,10 @@ public class Form {
         break;
 
       case "select":
-        inp = new Text(this, ip);
+        inp = new Select(this, ip);
         break;
       case "button":
-        String in = ip.attr("type").toLowerCase();
+        String in = ip.getAttribute("type").toLowerCase();
         switch (in) {
           case "reset":
             inp = new Button(this, ip);
@@ -352,51 +389,43 @@ public class Form {
   public Page getAssociatedPage() {
     return this.page;
   }
-  public Element getElement() {
+  WebElement getElement() {
     return this.formDom;
   }
   public String toString() {
     return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
   }
-  public Input findByCSSSelector(String selector) {
-    return this.getAssociatedInputs().stream().filter((input) -> input
-        .getCSSSelector().equals(selector)).findFirst().get();
-  }
 
-  public enum METHODS {
-    GET, POST, PUT, DELETE
-  }
-
-  public static String getTextForClassification(Element formElement, Page page) {
-    String html_data = formElement.html();
-    Document document = Page.createDOM(html_data);
+  static String getTextForClassification(WebElement formElement, Page page) {
     String pageTitle = page.getDriver().getTitle();
-    String formText = document.text();
-    List<String> placeHolders = document.getElementsByAttribute("placeholder").stream().map((e) -> e.attr("placeholder")).collect(Collectors.toList());
+    String formText = formElement.getText();
+    By submitButton = By.cssSelector("input[type='submit']");
+    By submitButton2 = By.cssSelector("button[type='submit']");
+    List<String> placeHolders = getElementByAttr(formElement, "placeholder");
+    List<String> names = getElementByAttr(formElement, "name");
+    String btn_text;
+    String btn_text2;
+    try {
+      btn_text = formElement.findElement(submitButton).getAttribute("value");
+    } catch (NoSuchElementException e) {
+      btn_text = "";
+    }
 
-    List<String> names = document.getElementsByAttribute("name").stream().map((e) -> e.attr("name")).collect(Collectors.toList());
-    List<String> btn_text = document.select("input[type='submit']").stream().map((e) -> e.attr("value")).collect(Collectors.toList());
-    List<String> labelText = document.select("label").stream().map((e) -> e.text()).collect(Collectors.toList());
+    try {
+      btn_text2 = formElement.findElement(submitButton2).getText();
+    } catch (NoSuchElementException e) {
+      btn_text2 = "";
+    }
 
-    String text = pageTitle + " " + formText + " " +
-        concatList(placeHolders) + " " + concatList(names) + " " + concatList(btn_text) + " " + concatList(labelText);
+    List<String> labelText = getTextOf(formElement, By.cssSelector("label"));
 
-    String camelCaseStr = text.replaceAll("(\\n+)|(\\t+)|(\\s+)|(\\r+)", " ").replaceAll("[^a-zA-Z\\s]", "").toLowerCase();
+    String text = String.format("%s %s %s %s %s %s %s", pageTitle, formText, concatList(placeHolders, " "), concatList(names, " "), btn_text, btn_text2, concatList(labelText, " "));
+
+    String camelCaseStr = removePunctuations(filterText(text)).toLowerCase();
 
     ArrayList<String> tokens = splitCamelCaseString(camelCaseStr);
-    return tokens.stream().reduce((a, b) -> a + " " + b ).orElse("").replaceAll("\\s+", " ");
-
-  }
-
-  private static String concatList(List<String> li) {
-    return li.stream().reduce((a, b) -> a + " " + b).orElse("");
-  }
-
-  private static ArrayList<String> splitCamelCaseString(String s){
-    ArrayList<String> result = new ArrayList<>();
-    for (String w : s.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
-      result.add(w);
-    }
-    return result;
+    String tokenStr = tokens.stream().reduce((a, b) -> a + " " + b).orElse("");
+    return removeMultipleSpaces(tokenStr);
   }
 }
+

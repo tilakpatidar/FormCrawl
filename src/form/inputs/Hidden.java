@@ -7,7 +7,7 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.jsoup.nodes.Element;
+import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
 
@@ -18,39 +18,14 @@ import java.io.IOException;
  */
 public class Hidden extends Input {
 
-  public Hidden(Form f, Element ip) throws IOException, Exception {
-    super(f, ip, Input.FIELDTYPES.HIDDEN_INPUT);
+  public Hidden(Form f, WebElement ip) throws IOException, Exception {
+    super(f, ip, FIELD_TYPES.HIDDEN_INPUT);
   }
 
   @Override
   public void fill(String s) throws UnsupportedOperationException {
 
     throw new UnsupportedOperationException("Hidden inputs cannot be filled");
-  }
-
-  @Override
-  public String getTitle() {
-    return this.getName();
-  }
-
-  /**
-   * Returns placeholder for element
-   *
-   * @return
-   */
-  @Override
-  public String getPlaceHolder() {
-    return this.getName();
-  }
-
-  @Override
-  public ORIENTATIONS getOrientation() {
-    return null;
-  }
-
-  @Override
-  public boolean isRequired() {
-    return true;
   }
 }
 

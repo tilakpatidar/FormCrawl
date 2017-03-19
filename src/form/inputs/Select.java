@@ -7,12 +7,12 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Select input implementation
@@ -25,12 +25,15 @@ public class Select extends Input {
   private final boolean multi_select;
   private final HashMap<String, String> select_values;
 
-  public Select(Form f, Element ip) throws IOException, Exception {
-    super(f, ip, Input.FIELDTYPES.SELECT_INPUT);
+  public Select(Form f, WebElement ip) throws IOException {
+    super(f, ip, FIELD_TYPES.SELECT_INPUT);
     this.select_element = new org.openqa.selenium.support.ui.Select(this.getWebElement());
-    this.multi_select = this.getElement().hasAttr("multiple");
+    this.multi_select = isMultipleSelect();
     this.select_values = new HashMap();
     this.storeSelectValues();
+  }
+  private boolean isMultipleSelect() {
+    return this.getWebElement().getAttribute("multiple") != null;
   }
 
   /**
@@ -86,10 +89,10 @@ public class Select extends Input {
    * Using select dom creates a HashMap of value and label
    */
   private void storeSelectValues() {
-    Element select = this.getElement();
-    Elements options = select.getElementsByTag("option");
-    for (Element option : options) {
-      this.select_values.put(option.attr("value"), option.text());
+    WebElement select = this.getWebElement();
+    List<WebElement> options = select.findElements(By.tagName("option"));
+    for (WebElement option : options) {
+      this.select_values.put(option.getAttribute("value"), option.getText());
     }
   }
 

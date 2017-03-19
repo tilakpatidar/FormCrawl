@@ -7,7 +7,6 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
@@ -19,8 +18,8 @@ import java.io.IOException;
  */
 public class Email extends Input {
 
-  public Email(Form f, Element ip) throws IOException {
-    super(f, ip, Input.FIELDTYPES.EMAIL_INPUT);
+  public Email(Form f, WebElement ip) throws IOException {
+    super(f, ip, FIELD_TYPES.EMAIL_INPUT);
   }
 
   @Override

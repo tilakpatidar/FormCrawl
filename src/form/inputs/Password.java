@@ -7,7 +7,6 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
@@ -19,8 +18,8 @@ import java.io.IOException;
  */
 public class Password extends Input {
 
-  public Password(Form f, Element ip) throws IOException {
-    super(f, ip, Input.FIELDTYPES.PASSWORD_INPUT);
+  public Password(Form f, WebElement ip) throws IOException {
+    super(f, ip, FIELD_TYPES.PASSWORD_INPUT);
   }
 
   @Override

@@ -6,8 +6,6 @@
 package form.inputs;
 
 import form.Form;
-import form.Input;
-import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
@@ -19,8 +17,8 @@ import java.io.IOException;
  */
 public class CheckBox extends Groupable {
 
-  public CheckBox(Form f, Element ip) throws IOException {
-    super(f, ip, Input.FIELDTYPES.CHECKBOX_INPUT);
+  public CheckBox(Form f, WebElement ip) throws IOException {
+    super(f, ip, FIELD_TYPES.CHECKBOX_INPUT);
   }
 
   @Override
@@ -33,7 +31,7 @@ public class CheckBox extends Groupable {
       WebElement e = this.getWebElement();
       e.click();
     }catch (Exception e){
-      System.out.println(this.getCSSSelector());
+      System.out.println(this.getWebElement().getLocation());
     }
 
   }

@@ -7,7 +7,6 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.jsoup.nodes.Element;
 import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
@@ -19,8 +18,8 @@ public class Button extends Input {
 
   private Button.TYPES button_type;
 
-  public Button(Form f, Element ip) throws IOException {
-    super(f, ip, Input.FIELDTYPES.BUTTON_INPUT);
+  public Button(Form f, WebElement ip) throws IOException {
+    super(f, ip, FIELD_TYPES.BUTTON_INPUT);
   }
 
   ;
@@ -37,10 +36,6 @@ public class Button extends Input {
   }
   public void setButtonType(Button.TYPES type) {
     this.button_type = type;
-  }
-  @Override
-  protected Input.ORIENTATIONS findOrientation() throws IOException {
-    return Input.ORIENTATIONS.NO_ORIENTATION_REQ;
   }
   public void submit() {
     if (this.button_type.equals(Button.TYPES.SUBMIT)) {
