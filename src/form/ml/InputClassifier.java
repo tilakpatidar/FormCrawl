@@ -1,6 +1,5 @@
 package form.ml;
 
-import form.Input;
 import weka.classifiers.bayes.NaiveBayes;
 
 final public class InputClassifier extends ClassifierTemplate {
@@ -19,9 +18,8 @@ final public class InputClassifier extends ClassifierTemplate {
     System.out.println(classifier.getCategory("create new password"));
   }
 
-  public Input.CATEGORIES getCategory(String input_title) {
-    String label = super.classifyLabel(input_title);
-    return Input.CATEGORIES.valueOf(label);
+  private String getCategory(String input_title) {
+    return super.classifyLabel(input_title);
   }
 
   @Override

@@ -1,5 +1,6 @@
 package form;
 
+import form.autofill.data.Record;
 import form.autofill.fillers.AutoFill;
 import form.autofill.fillers.RandomAutoFill;
 import form.autofill.suggesters.RandomSuggester;
@@ -20,22 +21,26 @@ import static form.util.TextUtil.*;
 
 public class Form {
 
+  public static final By RESULTS_DIV = By.id("inner_results_div");
   private static final Class<RandomAutoFill> FILL_CLASS = RandomAutoFill.class;
   private static final Class<RandomSuggester> SUGGESTER_CLASS = RandomSuggester.class;
   private final Page page;
 
   private final WebElement formDom;
+  private final Suggester suggester;
+  private final WebDriver driver;
   private ArrayList<Input> form_inputs;
   private HashMap<String, Group> inputGroups = new HashMap<>();
   private HashMap<Input, WebElement> inputToWebElement = new HashMap<>();
   private HashMap<WebElement, Input> webElementToInput = new HashMap<>();
   private Button submitButton;
 
-  public Form(Page page, WebElement formDom) {
+  public Form(Page page, WebElement formDom) throws IllegalAccessException, InstantiationException {
 
     this.page = page;
     this.formDom = formDom;
-
+    this.suggester = SUGGESTER_CLASS.newInstance();
+    this.driver = this.getAssociatedPage().getDriver();
     ArrayList<WebElement> input_collection = Form.detectFields(this.formDom);
     System.out.println("Web Elements detected from form DOM");
     this.form_inputs = new ArrayList<>();
@@ -64,6 +69,95 @@ public class Form {
     if (this.submitButton == null) {
       throw new RuntimeException("No submit button present");
     }
+  }
+  public static int angleBetween2Lines(Point labelLocation, Point
+      fieldLocation) {
+    Point basePoint = new Point(fieldLocation.x + 10, fieldLocation.y);
+    float angle1 = (float) Math.atan2(fieldLocation.y - labelLocation.y, labelLocation.x
+        - fieldLocation.x);
+    float angle2 = (float) Math.atan2(basePoint.y - fieldLocation.y, fieldLocation.x
+        - basePoint.x);
+    float calculatedAngle = (float) Math.toDegrees(angle1 - angle2);
+    if (calculatedAngle < 0) calculatedAngle += 360;
+    return (int) calculatedAngle;
+  }
+  public static boolean angleNear90Multiples(int angle) {
+    int[] multiples = {0, 90, 180, 270, 360};
+    double comparableWithinPercentage = 7.0 / 100.0;
+    for (int multiple : multiples) {
+      if (comparableNum(angle, multiple, comparableWithinPercentage)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  private static boolean comparablePoint(Point labelPoint, Point fieldPoint) {
+    double comparableWithinPercentage = 7.0 / 100.0;
+
+    double x = labelPoint.x;
+    double x1 = fieldPoint.x;
+    double y = labelPoint.y;
+    double y1 = fieldPoint.y;
+    boolean comparableX = comparableNum(x, x1, comparableWithinPercentage);
+    boolean comparableY = comparableNum(y, y1, comparableWithinPercentage);
+    return comparableX || comparableY;
+  }
+  private static boolean comparableNum(double x, double y, double
+      withinPercentage) {
+    double xComparision = Math.abs(1.0 - (x / y));
+    return xComparision <= withinPercentage;
+  }
+  private static ArrayList<WebElement> detectFields(WebElement form_dom) {
+
+    ArrayList<WebElement> input_collection = new ArrayList<>();
+    String[] VALID_INPUT_TAGS = {"input", "textarea", "select", "button"};
+    for (String tag : VALID_INPUT_TAGS) {
+      input_collection.addAll(form_dom.findElements(By.tagName(tag)));
+    }
+
+    ArrayList<WebElement> form_elements = new ArrayList<>();
+
+    for (WebElement e : input_collection) {
+      //not hidden element and element is part of valid input tags
+      String tagName = e.getTagName();
+      int index = Arrays.binarySearch(VALID_INPUT_TAGS, tagName);
+      boolean hasValidTagName = index >= 0;
+      if (!isHiddenInputElement(e) && hasValidTagName) {
+        form_elements.add(e);
+      }
+    }
+    return form_elements;
+  }
+  static String getTextForClassification(WebElement formElement, Page page) {
+    String pageTitle = page.getDriver().getTitle();
+    String formText = formElement.getText();
+    By submitButton = By.cssSelector("input[type='submit']");
+    By submitButton2 = By.cssSelector("button[type='submit']");
+    List<String> placeHolders = getElementByAttr(formElement, "placeholder");
+    List<String> names = getElementByAttr(formElement, "name");
+    String btn_text;
+    String btn_text2;
+    try {
+      btn_text = formElement.findElement(submitButton).getAttribute("value");
+    } catch (NoSuchElementException e) {
+      btn_text = "";
+    }
+
+    try {
+      btn_text2 = formElement.findElement(submitButton2).getText();
+    } catch (NoSuchElementException e) {
+      btn_text2 = "";
+    }
+
+    List<String> labelText = getTextOf(formElement, By.cssSelector("label"));
+
+    String text = String.format("%s %s %s %s %s %s %s", pageTitle, formText, concatList(placeHolders, " "), concatList(names, " "), btn_text, btn_text2, concatList(labelText, " "));
+
+    String camelCaseStr = removePunctuations(filterText(text)).toLowerCase();
+
+    ArrayList<String> tokens = splitCamelCaseString(camelCaseStr);
+    String tokenStr = tokens.stream().reduce((a, b) -> a + " " + b).orElse("");
+    return removeMultipleSpaces(tokenStr);
   }
   private void associateLabelsAndFields() {
     HashMap<WebElement, Input> cloned = new HashMap<>(webElementToInput);
@@ -119,7 +213,6 @@ public class Form {
       }
     }
   }
-
   private List<WebElement> filterLabelWhichHaveForAttr(Set<Map
       .Entry<WebElement, Input>> pairs) {
     WebElement formElement = this.getElement();
@@ -151,47 +244,6 @@ public class Form {
     }
     return false;
   }
-
-  public static int angleBetween2Lines(Point labelLocation, Point
-      fieldLocation) {
-    Point basePoint = new Point(fieldLocation.x + 10, fieldLocation.y);
-    float angle1 = (float) Math.atan2(fieldLocation.y - labelLocation.y, labelLocation.x
-        - fieldLocation.x);
-    float angle2 = (float) Math.atan2(basePoint.y - fieldLocation.y, fieldLocation.x
-        - basePoint.x);
-    float calculatedAngle = (float) Math.toDegrees(angle1 - angle2);
-    if (calculatedAngle < 0) calculatedAngle += 360;
-    return (int) calculatedAngle;
-  }
-
-  public static boolean angleNear90Multiples(int angle) {
-    int[] multiples = {0, 90, 180, 270, 360};
-    double comparableWithinPercentage = 7.0 / 100.0;
-    for (int multiple : multiples) {
-      if (comparableNum(angle, multiple, comparableWithinPercentage)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean comparablePoint(Point labelPoint, Point fieldPoint) {
-    double comparableWithinPercentage = 7.0 / 100.0;
-
-    double x = labelPoint.x;
-    double x1 = fieldPoint.x;
-    double y = labelPoint.y;
-    double y1 = fieldPoint.y;
-    boolean comparableX = comparableNum(x, x1, comparableWithinPercentage);
-    boolean comparableY = comparableNum(y, y1, comparableWithinPercentage);
-    return comparableX || comparableY;
-  }
-  private static boolean comparableNum(double x, double y, double
-      withinPercentage) {
-    double xComparision = Math.abs(1.0 - (x / y));
-    return xComparision <= withinPercentage;
-  }
-
   private int calculateDist(Point first, Point second) {
     int xDiff = second.x - first.x;
     int yDiff = second.y - first.y;
@@ -200,76 +252,38 @@ public class Form {
     int sum = xDiffSq + yDiffSq;
     return (int) Math.sqrt(sum);
   }
-  private static ArrayList<WebElement> detectFields(WebElement form_dom) {
-
-    ArrayList<WebElement> input_collection = new ArrayList<>();
-    for (String tag : Input.VALID_INPUT_TAGS) {
-      input_collection.addAll(form_dom.findElements(By.tagName(tag)));
-    }
-
-    ArrayList<WebElement> form_elements = new ArrayList<>();
-
-    for (WebElement e : input_collection) {
-      //not hidden element and element is part of valid input tags
-      String tagName = e.getTagName();
-      boolean hasValidTagName = Input.VALID_INPUT_TAGS.contains(tagName);
-      if (!isHiddenInputElement(e) && hasValidTagName) {
-        form_elements.add(e);
-      }
-    }
-    return form_elements;
-  }
-
   public ArrayList<Input> getAssociatedInputs() {
     return this.form_inputs;
   }
-
   void submitForm() throws Exception {
-    WebDriver driver = this.getAssociatedPage().getDriver();
-    this.fillForm(FILL_CLASS);
+    this.fillForm();
     Button b = this.getSubmitButton();
     b.getWebElement().click();
-    WebElement resultsDiv;
     while (true) {
       try {
-        resultsDiv = driver.findElement(By.id("inner_results_div"));
+        driver.findElement(RESULTS_DIV);
         break;
       } catch (NoSuchElementException e) {
         e.printStackTrace();
       }
       Thread.sleep(5000);
     }
-    String html = resultsDiv.getAttribute("outerHTML");
-    String text = filterText(resultsDiv.getText());
-    this.fillForm(FILL_CLASS, html, text);
   }
-
   private Button getSubmitButton() {
     return this.submitButton;
   }
-
-  private void fillForm(Class<? extends AutoFill> T) throws Exception {
-    AutoFill filler = T.newInstance();
-    Suggester suggester = SUGGESTER_CLASS.newInstance();
+  private void fillForm() throws Exception {
+    AutoFill filler = FILL_CLASS.newInstance();
     filler.init(this);
-    filler.fill(suggester);
+    Record record = suggester.getSuggestedRecord(this);
+    filler.fill(record);
   }
-
-  private void fillForm(Class<? extends AutoFill> T, String html, String text) throws Exception {
-    AutoFill filler = T.newInstance();
-    Suggester suggester = SUGGESTER_CLASS.newInstance();
-    filler.init(this);
-    filler.fill(suggester, html, text);
-  }
-
   public Input getInputBy(WebElement element) {
     return this.webElementToInput.get(element);
   }
-
   public Group getGroupBy(String name) {
     return this.inputGroups.get(name);
   }
-
   private Input detectInput(WebElement ip) throws IOException {
     String tag_name = ip.getTagName();
     Input inp;
@@ -395,43 +409,17 @@ public class Form {
   public String toString() {
     return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
   }
-
-  static String getTextForClassification(WebElement formElement, Page page) {
-    String pageTitle = page.getDriver().getTitle();
-    String formText = formElement.getText();
-    By submitButton = By.cssSelector("input[type='submit']");
-    By submitButton2 = By.cssSelector("button[type='submit']");
-    List<String> placeHolders = getElementByAttr(formElement, "placeholder");
-    List<String> names = getElementByAttr(formElement, "name");
-    String btn_text;
-    String btn_text2;
-    try {
-      btn_text = formElement.findElement(submitButton).getAttribute("value");
-    } catch (NoSuchElementException e) {
-      btn_text = "";
-    }
-
-    try {
-      btn_text2 = formElement.findElement(submitButton2).getText();
-    } catch (NoSuchElementException e) {
-      btn_text2 = "";
-    }
-
-    List<String> labelText = getTextOf(formElement, By.cssSelector("label"));
-
-    String text = String.format("%s %s %s %s %s %s %s", pageTitle, formText, concatList(placeHolders, " "), concatList(names, " "), btn_text, btn_text2, concatList(labelText, " "));
-
-    String camelCaseStr = removePunctuations(filterText(text)).toLowerCase();
-
-    ArrayList<String> tokens = splitCamelCaseString(camelCaseStr);
-    String tokenStr = tokens.stream().reduce((a, b) -> a + " " + b).orElse("");
-    return removeMultipleSpaces(tokenStr);
-  }
   public void addToGroup(Group gp) {
     this.inputGroups.put(gp.getName(), gp);
   }
   public List<Group> getInputGroups() {
     return new ArrayList<>(this.inputGroups.values());
+  }
+  public List<Input> getNonGroupableBoundedInputs() {
+    return this.form_inputs.stream().filter(i -> i.isBounded() && !i.isGroupAble()).collect(Collectors.toList());
+  }
+  public List<Input> getUnboundedFields() {
+    return this.form_inputs.stream().filter(i -> !i.isBounded()).collect(Collectors.toList());
   }
 }
 

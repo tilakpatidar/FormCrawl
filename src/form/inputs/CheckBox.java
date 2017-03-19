@@ -25,6 +25,14 @@ public class CheckBox extends Groupable {
   public void fill(String s) {
     this.clickCheckbox();
   }
+  @Override
+  public boolean isBounded() {
+    return true;
+  }
+  @Override
+  public boolean isGroupAble() {
+    return true;
+  }
 
   private void clickCheckbox() {
     try{

@@ -30,5 +30,13 @@ public class TextArea extends Input {
     WebElement e = this.getWebElement();
     e.sendKeys("demo"); // TODO using demo value in TextArea
   }
+  @Override
+  public boolean isBounded() {
+    return false;
+  }
+  @Override
+  public boolean isGroupAble() {
+    return false;
+  }
 }
 

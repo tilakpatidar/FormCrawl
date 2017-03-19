@@ -30,6 +30,14 @@ public class Text extends Input {
   public void fill(String value) {
     this.fillText(value);
   }
+  @Override
+  public boolean isBounded() {
+    return false;
+  }
+  @Override
+  public boolean isGroupAble() {
+    return false;
+  }
 
   private void fillText(String value) {
     WebElement e = this.getWebElement();

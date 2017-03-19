@@ -42,8 +42,15 @@ public class Select extends Input {
    */
   @Override
   public void fill(String s) {
-    WebElement e = this.getWebElement();
-    this.select_element.selectByValue("sdfs"); // TODO using default value in select
+    this.select_element.selectByVisibleText(s); // TODO using default value in select
+  }
+  @Override
+  public boolean isBounded() {
+    return true;
+  }
+  @Override
+  public boolean isGroupAble() {
+    return false;
   }
 
   /**

@@ -2,7 +2,6 @@ package form.autofill.fillers;
 
 import form.Form;
 import form.autofill.data.Record;
-import form.autofill.suggesters.Suggester;
 
 import java.util.ArrayList;
 
@@ -18,8 +17,7 @@ public abstract class AutoFill {
     this.form = form;
     this.records = new ArrayList<Record>();
   }
-  public abstract void fill(Suggester suggester);
-  public abstract void fill(Suggester suggester, String html, String text);
+  public abstract void fill(Record record);
   public Form getForm() {
     return form;
   }

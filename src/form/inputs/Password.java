@@ -26,6 +26,14 @@ public class Password extends Input {
   public void fill(String s) {
     this.fillText("demo"); //TODO Using demo value in fillText()
   }
+  @Override
+  public boolean isBounded() {
+    return false;
+  }
+  @Override
+  public boolean isGroupAble() {
+    return false;
+  }
 
   private void fillText(String value) {
     WebElement e = this.getWebElement();

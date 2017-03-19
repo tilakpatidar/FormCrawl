@@ -27,6 +27,14 @@ public class Radio extends Input {
   public void fill(String s) {
     this.clickRadio();
   }
+  @Override
+  public boolean isBounded() {
+    return true;
+  }
+  @Override
+  public boolean isGroupAble() {
+    return true;
+  }
 
   private void clickRadio() {
     WebElement e = this.getWebElement();

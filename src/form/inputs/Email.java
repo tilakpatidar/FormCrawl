@@ -26,6 +26,14 @@ public class Email extends Input {
   public void fill(String s) {
     this.fillText("test"); // TODO Using demo value in fillText()
   }
+  @Override
+  public boolean isBounded() {
+    return false;
+  }
+  @Override
+  public boolean isGroupAble() {
+    return false;
+  }
 
   private void fillText(String val) {
     WebElement e = this.getWebElement();

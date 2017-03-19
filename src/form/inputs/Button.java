@@ -27,6 +27,14 @@ public class Button extends Input {
   public void fill(String s) {
     this.clickButton();
   }
+  @Override
+  public boolean isBounded() {
+    return false;
+  }
+  @Override
+  public boolean isGroupAble() {
+    return false;
+  }
   private void clickButton() {
     WebElement e = this.getWebElement();
     e.click();

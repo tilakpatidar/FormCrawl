@@ -27,5 +27,13 @@ public class Hidden extends Input {
 
     throw new UnsupportedOperationException("Hidden inputs cannot be filled");
   }
+  @Override
+  public boolean isBounded() {
+    return false;
+  }
+  @Override
+  public boolean isGroupAble() {
+    return false;
+  }
 }
 
