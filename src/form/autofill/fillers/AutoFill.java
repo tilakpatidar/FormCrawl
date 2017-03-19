@@ -19,6 +19,7 @@ public abstract class AutoFill {
     this.records = new ArrayList<Record>();
   }
   public abstract void fill(Suggester suggester);
+  public abstract void fill(Suggester suggester, String html, String text);
   public Form getForm() {
     return form;
   }

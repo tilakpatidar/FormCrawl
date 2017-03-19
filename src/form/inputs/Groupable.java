@@ -21,28 +21,24 @@ public abstract class Groupable extends Input {
   }
 
   private void addToGroup(FIELD_TYPES type) {
-    Group gp = this.getAssociatedForm().findGroupByName(this.groupClassName, this.getInputName());
+    String inputName = this.getInputName();
+    Group gp = this.getAssociatedForm().getGroupBy(inputName);
     if (gp == null) {
       //group not exists create one
       switch (type) {
         case CHECKBOX_INPUT:
-          gp = new CheckBoxGroup(this.getInputName());
+          gp = new CheckBoxGroup(inputName);
           gp.addElement(this);
-          this.getAssociatedForm().getInputGroups().add(gp);
+          this.getAssociatedForm().addToGroup(gp);
           break;
         case RADIO_INPUT:
-          gp = new RadioGroup(this.getInputName());
+          gp = new RadioGroup(inputName);
           gp.addElement(this);
-          this.getAssociatedForm().getInputGroups().add(gp);
+          this.getAssociatedForm().addToGroup(gp);
           break;
       }
     } else {
       gp.addElement(this);
     }
-  }
-
-  public Group getGroup() {
-    Group gp = this.getAssociatedForm().findGroupByName(this.groupClassName, this.getInputName());
-    return gp;
   }
 }

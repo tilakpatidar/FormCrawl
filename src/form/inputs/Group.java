@@ -3,6 +3,9 @@ package form.inputs;
 import form.Input;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
+
+import static form.util.TextUtil.concatList;
 
 /**
  * Created by tilak on 4/12/16.
@@ -40,5 +43,11 @@ public abstract class Group {
 
   public static enum GROUP_TYPES {
     CHECKBOX_GROUP, RADIO_GROUP
+  }
+
+  @Override
+  public String toString() {
+    String inputs = concatList(inps.stream().map(i -> i.toString() + " | ").collect(Collectors.toList()), "");
+    return String.format("Group{inps=%s, type=%s, name='%s'}", inputs, type, name);
   }
 }

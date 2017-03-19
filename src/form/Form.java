@@ -26,7 +26,7 @@ public class Form {
 
   private final WebElement formDom;
   private ArrayList<Input> form_inputs;
-  private ArrayList<Group> inputGroups = new ArrayList<>();
+  private HashMap<String, Group> inputGroups = new HashMap<>();
   private HashMap<Input, WebElement> inputToWebElement = new HashMap<>();
   private HashMap<WebElement, Input> webElementToInput = new HashMap<>();
   private Button submitButton;
@@ -66,7 +66,8 @@ public class Form {
     }
   }
   private void associateLabelsAndFields() {
-    Set<Map.Entry<WebElement, Input>> pairs = webElementToInput.entrySet();
+    HashMap<WebElement, Input> cloned = new HashMap<>(webElementToInput);
+    Set<Map.Entry<WebElement, Input>> pairs = cloned.entrySet();
     List<WebElement> labelsWithoutFor = filterLabelWhichHaveForAttr(pairs);
     for (Map.Entry<WebElement, Input> pair : pairs) {
       WebElement field = pair.getKey();
@@ -131,9 +132,9 @@ public class Form {
         WebElement fieldElement = this.getElement().findElement(By.id(fieldId));
         Input input = webElementToInput.get(fieldElement);
         setLabel(input, labelText);
-        Map.Entry<WebElement,Input> entry =
+        Map.Entry<WebElement, Input> entry =
             new AbstractMap.SimpleEntry<>(fieldElement, input);
-        System.out.println(pairs.remove(entry));
+        pairs.remove(entry);
         return false;
       }
       return true;
@@ -239,9 +240,8 @@ public class Form {
       Thread.sleep(5000);
     }
     String html = resultsDiv.getAttribute("outerHTML");
-    String text = resultsDiv.getText();
-    System.out.println(html);
-    System.out.println(text);
+    String text = filterText(resultsDiv.getText());
+    this.fillForm(FILL_CLASS, html, text);
   }
 
   private Button getSubmitButton() {
@@ -255,19 +255,19 @@ public class Form {
     filler.fill(suggester);
   }
 
-  public ArrayList<Group> getInputGroups() {
-    return this.inputGroups;
+  private void fillForm(Class<? extends AutoFill> T, String html, String text) throws Exception {
+    AutoFill filler = T.newInstance();
+    Suggester suggester = SUGGESTER_CLASS.newInstance();
+    filler.init(this);
+    filler.fill(suggester, html, text);
   }
 
-  public Group findGroupByName(String class_name, String name) {
+  public Input getInputBy(WebElement element) {
+    return this.webElementToInput.get(element);
+  }
 
-    for (Group i : this.inputGroups) {
-      if (i.getClass().getCanonicalName().equals(class_name) && i.getName().equals(name)) {
-        return i;
-      }
-    }
-
-    return null;
+  public Group getGroupBy(String name) {
+    return this.inputGroups.get(name);
   }
 
   private Input detectInput(WebElement ip) throws IOException {
@@ -426,6 +426,12 @@ public class Form {
     ArrayList<String> tokens = splitCamelCaseString(camelCaseStr);
     String tokenStr = tokens.stream().reduce((a, b) -> a + " " + b).orElse("");
     return removeMultipleSpaces(tokenStr);
+  }
+  public void addToGroup(Group gp) {
+    this.inputGroups.put(gp.getName(), gp);
+  }
+  public List<Group> getInputGroups() {
+    return new ArrayList<>(this.inputGroups.values());
   }
 }
 

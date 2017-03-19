@@ -10,23 +10,29 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 public class RandomAutoFill extends AutoFill {
   @Override
   public void fill(Suggester suggester) {
+    fill(suggester, "", "");
+  }
+  @Override
+  public void fill(Suggester suggester, String html, String text) {
     Form form = super.getForm();
     Record record = suggester.getSuggestedRecord();
     String titleSearch = record.get("#title_search");
     By by = By.cssSelector("#title_search");
     WebDriver driver = form.getAssociatedPage().getDriver();
     WebElement inputElement = driver.findElement(by);
-    Input desiredInput = form.getAssociatedInputs().stream().filter((e) -> e.getWebElement().equals(inputElement)).collect(Collectors.toList()).get(0);
+
+    Input desiredInput = form.getInputBy(inputElement);
     desiredInput.fill(titleSearch);
     for (Group group : form.getInputGroups()) {
       ArrayList<Input> inputs = group.getElements();
+      boolean filled = false;
       for (Input input : inputs) {
-        if (false) {
+        if (randomTruth() && !filled) {
+          filled = true;
           input.fill("");
         }
       }

@@ -29,4 +29,8 @@ public class BasicAutoFill extends AutoFill {
       e.printStackTrace();
     }
   }
+  @Override
+  public void fill(Suggester suggester, String html, String text) {
+
+  }
 }

@@ -1,8 +1,6 @@
 package form;
 
 import form.ml.InputClassifier;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
@@ -84,7 +82,7 @@ public abstract class Input {
 
   @Override
   public String toString() {
-    return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+    return String.format("Name:  %s | Id:   %s |   LabelText:  %s%n", this.getInputName(), this.getInputId(), this.getInputTitle());
   }
   void setInputTitle(String input_title) {
     this.inputTitle = input_title;
@@ -99,8 +97,7 @@ public abstract class Input {
     this.inputId = inputId;
   }
   void printFieldLabelAssociation() {
-    System.out.printf("Name:  %s | Id:   %s |   LabelText:  %s%n", this.getInputName(), this
-        .getInputId(), this.getInputTitle());
+    System.out.println(this.toString());
   }
 
   public static void setLabel(Input input, String labelText) {
