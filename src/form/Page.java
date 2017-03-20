@@ -38,7 +38,9 @@ public final class Page {
     FormCrawl.drivers.add(this.driver);
     Scanner sc = new Scanner(System.in);
     String line;
+    System.out.println("Next iteration (y/n) ?");
     while ((line = sc.nextLine()) != null && line.equals("y")) {
+      System.out.println("Starting . . .");
       for (Form f : this.forms) {
         f.submitForm();
       }

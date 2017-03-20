@@ -61,6 +61,9 @@ public abstract class Input {
     input.setInputTitle(labelText);
     input.printFieldLabelAssociation();
   }
+  public String getTitle() {
+    return inputTitle;
+  }
 
   public enum FIELD_TYPES {
     TEXTAREA_INPUT, TEXT_INPUT, SELECT_INPUT, CHECKBOX_INPUT, RADIO_INPUT, BUTTON_INPUT, EMAIL_INPUT, PASSWORD_INPUT, HIDDEN_INPUT;

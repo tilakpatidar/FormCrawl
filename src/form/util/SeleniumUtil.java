@@ -65,15 +65,16 @@ public final class SeleniumUtil {
   }
 
   public static boolean hasAttr(WebElement e, String attr) {
-    return getAttr(e, attr) != null;
+    String fetchedAttr = getAttr(e, attr);
+    return isValidAttr(fetchedAttr);
+  }
+  public static boolean isValidAttr(String fetchedAttr) {
+    return fetchedAttr != null && !fetchedAttr.trim().isEmpty();
   }
 
-  public static boolean attrEq(WebElement element, String attr, String value) {
-    String attribute = element.getAttribute(attr);
-    if (attribute == null) {
-      return false;
-    }
-    return attribute.equalsIgnoreCase(value);
+  private static boolean attrEq(WebElement element, String attr, String value) {
+    String attribute = getAttr(element, attr);
+    return attribute != null && attribute.equalsIgnoreCase(value);
   }
 
   public static boolean isHiddenInputElement(WebElement e) {

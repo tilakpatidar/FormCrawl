@@ -16,6 +16,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static form.Input.setLabel;
+import static form.util.PointUtil.angleBetween2Lines;
+import static form.util.PointUtil.angleNear90Multiples;
+import static form.util.PointUtil.comparablePoint;
 import static form.util.SeleniumUtil.*;
 import static form.util.TextUtil.*;
 
@@ -24,6 +27,7 @@ public class Form {
   public static final By RESULTS_DIV = By.id("inner_results_div");
   private static final Class<RandomAutoFill> FILL_CLASS = RandomAutoFill.class;
   private static final Class<RandomSuggester> SUGGESTER_CLASS = RandomSuggester.class;
+  public static final int WAIT_FOR_RESULTS = 20000;
   private final Page page;
 
   private final WebElement formDom;
@@ -34,6 +38,7 @@ public class Form {
   private HashMap<Input, WebElement> inputToWebElement = new HashMap<>();
   private HashMap<WebElement, Input> webElementToInput = new HashMap<>();
   private Button submitButton;
+  private final String cssSelector;
 
   public Form(Page page, WebElement formDom) throws IllegalAccessException, InstantiationException {
 
@@ -42,6 +47,8 @@ public class Form {
     this.suggester = SUGGESTER_CLASS.newInstance();
     this.driver = this.getAssociatedPage().getDriver();
     ArrayList<WebElement> input_collection = Form.detectFields(this.formDom);
+    this.cssSelector = this.getCSSSelector();
+    System.out.printf("CSS selector for the form: %s%n", this.cssSelector);
     System.out.println("Web Elements detected from form DOM");
     this.form_inputs = new ArrayList<>();
 
@@ -58,7 +65,6 @@ public class Form {
             System.out.println("Submit button detected");
           }
         }
-        // this.page.createTooltip(input_obj.getWebElement(), input_obj.getTooltipData());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -70,63 +76,19 @@ public class Form {
       throw new RuntimeException("No submit button present");
     }
   }
-  public static int angleBetween2Lines(Point labelLocation, Point
-      fieldLocation) {
-    Point basePoint = new Point(fieldLocation.x + 10, fieldLocation.y);
-    float angle1 = (float) Math.atan2(fieldLocation.y - labelLocation.y, labelLocation.x
-        - fieldLocation.x);
-    float angle2 = (float) Math.atan2(basePoint.y - fieldLocation.y, fieldLocation.x
-        - basePoint.x);
-    float calculatedAngle = (float) Math.toDegrees(angle1 - angle2);
-    if (calculatedAngle < 0) calculatedAngle += 360;
-    return (int) calculatedAngle;
-  }
-  public static boolean angleNear90Multiples(int angle) {
-    int[] multiples = {0, 90, 180, 270, 360};
-    double comparableWithinPercentage = 7.0 / 100.0;
-    for (int multiple : multiples) {
-      if (comparableNum(angle, multiple, comparableWithinPercentage)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  private static boolean comparablePoint(Point labelPoint, Point fieldPoint) {
-    double comparableWithinPercentage = 7.0 / 100.0;
 
-    double x = labelPoint.x;
-    double x1 = fieldPoint.x;
-    double y = labelPoint.y;
-    double y1 = fieldPoint.y;
-    boolean comparableX = comparableNum(x, x1, comparableWithinPercentage);
-    boolean comparableY = comparableNum(y, y1, comparableWithinPercentage);
-    return comparableX || comparableY;
-  }
-  private static boolean comparableNum(double x, double y, double
-      withinPercentage) {
-    double xComparision = Math.abs(1.0 - (x / y));
-    return xComparision <= withinPercentage;
-  }
   private static ArrayList<WebElement> detectFields(WebElement form_dom) {
 
     ArrayList<WebElement> input_collection = new ArrayList<>();
     String[] VALID_INPUT_TAGS = {"input", "textarea", "select", "button"};
     for (String tag : VALID_INPUT_TAGS) {
-      input_collection.addAll(form_dom.findElements(By.tagName(tag)));
+      List<WebElement> elements = form_dom.findElements(By.tagName(tag));
+      elements = elements.stream().filter(e -> !isHiddenInputElement(e)).collect(Collectors.toList());
+      input_collection.addAll(elements);
     }
 
-    ArrayList<WebElement> form_elements = new ArrayList<>();
 
-    for (WebElement e : input_collection) {
-      //not hidden element and element is part of valid input tags
-      String tagName = e.getTagName();
-      int index = Arrays.binarySearch(VALID_INPUT_TAGS, tagName);
-      boolean hasValidTagName = index >= 0;
-      if (!isHiddenInputElement(e) && hasValidTagName) {
-        form_elements.add(e);
-      }
-    }
-    return form_elements;
+    return input_collection;
   }
   static String getTextForClassification(WebElement formElement, Page page) {
     String pageTitle = page.getDriver().getTitle();
@@ -177,7 +139,7 @@ public class Form {
         Point labelPoint = getPointFor(label);
         Point fieldPoint = getPointFor(field);
         String labelText = getLabelTextFor(label);
-        String fieldId = getAttr(field, "id");
+//        String fieldId = getAttr(field, "id");
 
         //check if same parent and only text
         WebElement labelParent = getParent(label);
@@ -256,19 +218,58 @@ public class Form {
     return this.form_inputs;
   }
   void submitForm() throws Exception {
+    this.resetForm();
     this.fillForm();
     Button b = this.getSubmitButton();
     b.getWebElement().click();
+    System.out.println("Form submitted waiting for results ...");
+    int waitTime = 0;
     while (true) {
       try {
-        driver.findElement(RESULTS_DIV);
-        break;
+        if(waitTime >= WAIT_FOR_RESULTS){
+          System.out.println("Waiting for results timed out!");
+          break;
+        }
+        if(!driver.findElement(RESULTS_DIV).getText().trim().isEmpty()){
+          System.out.println("Results found!");
+          break;
+        }
       } catch (NoSuchElementException e) {
         e.printStackTrace();
       }
-      Thread.sleep(5000);
+      Thread.sleep(1000);
+      waitTime += 1000;
     }
   }
+  void resetForm(){
+    String jsScript = "var form = document.querySelectorAll(\"" + this.cssSelector + "\")[0]; form.reset();";
+    JavascriptExecutor executor = (JavascriptExecutor) this.driver;
+    executor.executeScript(jsScript);
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException e) {
+      System.out.println("Exception in wait for js to execute");
+    }
+  }
+
+  private String getCSSSelector(){
+    String id = getAttr(formDom, "id");
+    if(isValidAttr(id)) {
+      return "#" + id;
+      
+    }
+    String className = getAttr(formDom, "class");
+    if(isValidAttr(className)) {
+      return "form." + className;
+    }
+    String action = getAttr(formDom, "action");
+    if(isValidAttr(action)) {
+      return "form[action='" + action + "']";
+    }
+    
+    return "form";
+  }
+
   private Button getSubmitButton() {
     return this.submitButton;
   }
@@ -277,6 +278,7 @@ public class Form {
     filler.init(this);
     Record record = suggester.getSuggestedRecord(this);
     filler.fill(record);
+    System.out.println("Form filled");
   }
   public Input getInputBy(WebElement element) {
     return this.webElementToInput.get(element);
@@ -420,6 +422,9 @@ public class Form {
   }
   public List<Input> getUnboundedFields() {
     return this.form_inputs.stream().filter(i -> !i.isBounded()).collect(Collectors.toList());
+  }
+  public WebDriver getDriver(){
+    return this.driver;
   }
 }
 
