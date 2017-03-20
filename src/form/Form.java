@@ -27,6 +27,7 @@ public class Form {
   public static final By RESULTS_DIV = By.id("inner_results_div");
   private static final Class<RandomAutoFill> FILL_CLASS = RandomAutoFill.class;
   private static final Class<RandomSuggester> SUGGESTER_CLASS = RandomSuggester.class;
+  private static final String[] LABEL_TAGS = {"label", "span", "td", "div"};
   public static final int WAIT_FOR_RESULTS = 20000;
   private final Page page;
 
@@ -139,7 +140,10 @@ public class Form {
         Point labelPoint = getPointFor(label);
         Point fieldPoint = getPointFor(field);
         String labelText = getLabelTextFor(label);
-//        String fieldId = getAttr(field, "id");
+        if(labelText.trim().isEmpty()){
+          continue;
+        }
+        String fieldId = getAttr(field, "id");
 
         //check if same parent and only text
         WebElement labelParent = getParent(label);
@@ -148,6 +152,7 @@ public class Form {
           if (filterText(getLabelTextFor(labelParent)).equals(filterText(labelText))) {
             setLabel(input, labelText);
             labelsWithoutFor.remove(label);
+            System.out.printf("accepted %d  %s parent",  fieldId, labelText);
             foundEarlierMatch = true;
             break;
           }
@@ -156,15 +161,17 @@ public class Form {
         if (comparablePoint(labelPoint, fieldPoint)) {
           int distance = calculateDist(labelPoint, fieldPoint);
           int angle = angleBetween2Lines(labelPoint, fieldPoint);
+          System.out.println(angleNear90Multiples(angle) + "  " + (distance <
+              minDist));
           if (angleNear90Multiples(angle) && distance < minDist) {
             goodLabel = label;
             minDist = distance;
-//            System.out.printf("accepted %d  %s  |  %s%n", angle, fieldId, labelText);
+            System.out.printf("accepted %d  %s  |  %s%n", angle, fieldId, labelText);
           } else {
-//            System.out.printf("rejected %d  %s  |  %s%n", angle, fieldId, labelText);
+            System.out.printf("rejected %d  %s  |  %s%n", angle, fieldId, labelText);
           }
         } else {
-//          System.out.printf("rejected dist   %s  |  %s%n", fieldId, labelText);
+          System.out.printf("rejected dist   %s  |  %s%n", fieldId, labelText);
         }
       }
 
@@ -178,7 +185,7 @@ public class Form {
   private List<WebElement> filterLabelWhichHaveForAttr(Set<Map
       .Entry<WebElement, Input>> pairs) {
     WebElement formElement = this.getElement();
-    List<WebElement> labels = getElementsByTagName(formElement, "label");
+    List<WebElement> labels = getLabelElements(formElement);
     return labels.stream().filter(label -> {
       //search if dev used a label[for=]
       String labelText = getLabelTextFor(label);
@@ -194,6 +201,13 @@ public class Form {
       }
       return true;
     }).collect(Collectors.toList());
+  }
+  private List<WebElement> getLabelElements(WebElement formElement) {
+    List<WebElement> labelsElements = new ArrayList<>();
+    for(String tagName : LABEL_TAGS){
+      labelsElements.addAll(getElementsByTagName(formElement, tagName));
+    }
+    return labelsElements;
   }
   private boolean fieldIsAButton(WebElement field, Input input) {
     if (isFieldButton(field)) {

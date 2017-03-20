@@ -46,6 +46,7 @@ public final class Page {
       }
       System.out.println("Next iteration (y/n) ?");
     }
+    System.exit(0);
   }
 
   private void loadSeleniumDriver() {

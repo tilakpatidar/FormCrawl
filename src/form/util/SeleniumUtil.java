@@ -96,7 +96,7 @@ public final class SeleniumUtil {
     if (labelStr != null) {
       return labelStr;
     }
-    String labelS = label.getText();
+    String labelS = label.getAttribute("innerText");
     labelStore.put(label, labelS);
     return labelS;
   }
