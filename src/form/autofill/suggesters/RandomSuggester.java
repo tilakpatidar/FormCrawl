@@ -5,7 +5,6 @@ import form.Input;
 import form.autofill.data.Record;
 import form.inputs.Group;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -52,7 +51,7 @@ public class RandomSuggester extends Suggester {
       }
     }
 
-    //filling non groupable but bounded elements
+    //filling non groupAble but bounded elements
     //basically select tags
     for (Input input : form.getNonGroupableBoundedInputs()) {
       By option = By.tagName("option");
@@ -67,19 +66,14 @@ public class RandomSuggester extends Suggester {
   }
   private void populateTokensForUnboundedFields(List<Input> unboundedFields, Element resultsDiv) {
     Input titleInput = unboundedFields.get(0);
-    String titleSelector = ".lister-item-header > a";
-    Elements titles = resultsDiv.select(titleSelector);
-    System.out.printf("Titles found %d%n", titles.size());
     Set<String> tokenGrams = new HashSet<>();
-    titles.forEach(titleDiv -> {
-      String title = filterText(removePunctuations(titleDiv.text()));
-      title = title.toLowerCase();
-      System.out.printf("Title: %s%n", title);
-      tokenGrams.addAll(ngrams(2, title));
-      List<String> trigrams = ngrams(3, title);
-      tokenGrams.addAll(trigrams);
-      tokenGrams.add(title);
-    });
+    String title = filterText(removePunctuations(resultsDiv.text()));
+    title = title.toLowerCase();
+    System.out.printf("Title: %s%n", title);
+    tokenGrams.addAll(ngrams(2, title));
+    List<String> trigrams = ngrams(3, title);
+    tokenGrams.addAll(trigrams);
+    tokenGrams.add(title);
     this.suggestionTokens.get(titleInput).addAll(tokenGrams);
     System.out.printf("BiGrams generated : %d%n", tokenGrams.size());
   }

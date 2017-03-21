@@ -26,16 +26,20 @@ public final class Page {
   private final ArrayList<Form> forms;
   private WebDriver driver;
 
-  public Page(String pageUrl) throws Exception {
-    SeleniumUtil.resetCache();
+  static {
     System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
+    SeleniumUtil.resetCache();
+  }
+
+  public Page(String pageUrl) throws Exception {
     this.pageUrl = new URL(pageUrl);
     this.forms = new ArrayList<>();
     this.loadSeleniumDriver();
-    System.out.println("Selenium driver loaded");
     this.findForms();
-    System.out.println("All forms parsed");
     FormCrawl.drivers.add(this.driver);
+    promptForNextCrawlIteration();
+  }
+  private void promptForNextCrawlIteration() throws Exception {
     Scanner sc = new Scanner(System.in);
     String line;
     System.out.println("Next iteration (y/n) ?");
@@ -49,10 +53,10 @@ public final class Page {
   }
 
   private void loadSeleniumDriver() {
-    WebDriver driver = new ChromeDriver();
-    this.driver = driver;
+    driver = new ChromeDriver();
     driver.get(this.pageUrl.toString());
     driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+    System.out.println("Selenium driver loaded");
   }
 
   private void findForms() {
@@ -60,18 +64,17 @@ public final class Page {
     By formTag = By.tagName("form");
     List<WebElement> forms = this.driver.findElements(formTag);
     WebElement form = forms.get(0);
-    //checkIfSearchableForm(form);
+    quitAppIfNotSearchable(form);
     Form f = null;
     try {
       f = new Form(this, form);
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-    } catch (InstantiationException e) {
+    } catch (IllegalAccessException | InstantiationException e) {
       e.printStackTrace();
     }
     this.forms.add(f);
+    System.out.println("All forms parsed");
   }
-  private void checkIfSearchableForm(WebElement form) {
+  private void quitAppIfNotSearchable(WebElement form) {
     try {
       String formText = Form.getTextForClassification(form, this);
       LRClassifier classifier = new LRClassifier();
@@ -86,7 +89,7 @@ public final class Page {
     }
   }
 
-  public WebDriver getDriver() {
+  WebDriver getDriver() {
     return this.driver;
   }
 

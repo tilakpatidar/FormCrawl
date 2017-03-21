@@ -27,15 +27,13 @@ public class Form {
   private static final Class<RandomAutoFill> FILL_CLASS = RandomAutoFill.class;
   private static final Class<RandomSuggester> SUGGESTER_CLASS = RandomSuggester.class;
   private static final String[] LABEL_TAGS = {"label", "span", "td", "div"};
-  public static final int WAIT_FOR_RESULTS = 20000;
-  private final Page page;
+  private static final int WAIT_FOR_RESULTS = 20000;
 
   private final WebElement formDom;
   private final Suggester suggester;
   private final WebDriver driver;
-  private ArrayList<Input> form_inputs;
+  private ArrayList<Input> formInputs;
   private HashMap<String, Group> inputGroups = new HashMap<>();
-  private HashMap<Input, WebElement> inputToWebElement = new HashMap<>();
   private HashMap<WebElement, Input> webElementToInput = new HashMap<>();
   private Button submitButton;
   private final String cssSelector;
@@ -44,23 +42,18 @@ public class Form {
 
   public Form(Page page, WebElement formDom) throws IllegalAccessException, InstantiationException {
 
-    this.page = page;
     this.formDom = formDom;
     this.suggester = SUGGESTER_CLASS.newInstance();
-    this.driver = this.getAssociatedPage().getDriver();
+    this.driver = page.getDriver();
     this.domCompare = new DomCompare(this.driver.getPageSource());
-    ArrayList<WebElement> input_collection = Form.detectFields(this.formDom);
     this.cssSelector = this.getCSSSelector();
-    System.out.printf("CSS selector for the form: %s%n", this.cssSelector);
-    System.out.println("Web Elements detected from form DOM");
-    this.form_inputs = new ArrayList<>();
+    this.formInputs = new ArrayList<>();
 
-    for (WebElement input : input_collection) {
+    for (WebElement input : Form.detectFields(this.formDom)) {
       try {
         Input input_obj = this.detectInput(input);
-        inputToWebElement.put(input_obj, input_obj.getWebElement());
         webElementToInput.put(input_obj.getWebElement(), input_obj);
-        this.form_inputs.add(input_obj);
+        this.formInputs.add(input_obj);
         if (input_obj instanceof Button) {
           Button b = (Button) input_obj;
           if (b.getButtonType().equals(Button.TYPES.SUBMIT)) {
@@ -89,7 +82,6 @@ public class Form {
       elements = elements.stream().filter(e -> !isHiddenInputElement(e)).collect(Collectors.toList());
       input_collection.addAll(elements);
     }
-
 
     return input_collection;
   }
@@ -125,88 +117,88 @@ public class Form {
     return removeMultipleSpaces(tokenStr);
   }
   private void associateLabelsAndFields() {
+
     HashMap<WebElement, Input> cloned = new HashMap<>(webElementToInput);
-    Set<Map.Entry<WebElement, Input>> pairs = cloned.entrySet();
-    List<WebElement> labelsWithoutFor = filterLabelWhichHaveForAttr(pairs);
-    for (Map.Entry<WebElement, Input> pair : pairs) {
+    List<WebElement> labelsForThisForm = getLabelElements(this.formDom);
+    List<WebElement> labelsWithoutFor = getLabelsWithoutFor(labelsForThisForm);
+    List<WebElement> labelsWithFor = getLabelsWithFor(labelsForThisForm);
+    List<WebElement> associatedFields = associateFieldsForLabelWithForAttr(labelsWithFor);
+    associatedFields.forEach(cloned::remove);
+    for (Map.Entry<WebElement, Input> pair : cloned.entrySet()) {
       WebElement field = pair.getKey();
       Input input = pair.getValue();
       if (fieldIsAButton(field, input)) {
         continue;
       }
-      WebElement goodLabel = null;
-      int minDist = 99999;
-      boolean foundEarlierMatch = false;
-
-      for (WebElement label : labelsWithoutFor) {
-        Point labelPoint = getPointFor(label);
-        Point fieldPoint = getPointFor(field);
-        String labelText = getLabelTextFor(label);
-        if(labelText.trim().isEmpty()){
-          continue;
-        }
-        String fieldId = getAttr(field, "id");
-
-        //check if same parent and only text
-        WebElement labelParent = getParent(label);
-        WebElement fieldParent = getParent(field);
-        if (labelParent.equals(fieldParent)) {
-          if (filterText(getLabelTextFor(labelParent)).equals(filterText(labelText))) {
-            setLabel(input, labelText);
-            labelsWithoutFor.remove(label);
-            System.out.printf("accepted %d  %s parent",  fieldId, labelText);
-            foundEarlierMatch = true;
-            break;
-          }
-        }
-
-        if (comparablePoint(labelPoint, fieldPoint)) {
-          int distance = calculateDist(labelPoint, fieldPoint);
-          int angle = angleBetween2Lines(labelPoint, fieldPoint);
-          System.out.println(angleNear90Multiples(angle) + "  " + (distance <
-              minDist));
-          if (angleNear90Multiples(angle) && distance < minDist) {
-            goodLabel = label;
-            minDist = distance;
-//            System.out.printf("accepted %d  %s  |  %s%n", angle, fieldId, labelText);
-          } else {
-//            System.out.printf("rejected %d  %s  |  %s%n", angle, fieldId, labelText);
-          }
-        } else {
-//          System.out.printf("rejected dist   %s  |  %s%n", fieldId, labelText);
-        }
-      }
-
-      if (!foundEarlierMatch && goodLabel != null) {
-        String labelText = getLabelTextFor(goodLabel);
-        setLabel(input, labelText);
-        labelsWithoutFor.remove(goodLabel);
-      }
+      WebElement goodLabel = tryToAssociateFieldWithAnyOf(field, labelsWithoutFor);
+      String labelText = goodLabel == null ? "" : getLabelTextFor(goodLabel);
+      setLabel(input, labelText);
+      labelsWithoutFor.remove(goodLabel);
     }
   }
-  private List<WebElement> filterLabelWhichHaveForAttr(Set<Map
-      .Entry<WebElement, Input>> pairs) {
-    WebElement formElement = this.getElement();
-    List<WebElement> labels = getLabelElements(formElement);
-    return labels.stream().filter(label -> {
-      //search if dev used a label[for=]
+  private WebElement tryToAssociateFieldWithAnyOf(WebElement field, List<WebElement> labelsWithoutFor) {
+    WebElement goodLabel = null;
+    int minDist = 99999;
+
+    for (WebElement label : labelsWithoutFor) {
+      Point labelPoint = getPointFor(label);
+      Point fieldPoint = getPointFor(field);
       String labelText = getLabelTextFor(label);
-      String fieldId = getAttr(label, "for");
-      if (fieldId != null) {
-        WebElement fieldElement = this.getElement().findElement(By.id(fieldId));
-        Input input = webElementToInput.get(fieldElement);
-        setLabel(input, labelText);
-        Map.Entry<WebElement, Input> entry =
-            new AbstractMap.SimpleEntry<>(fieldElement, input);
-        pairs.remove(entry);
-        return false;
+      if (labelText.trim().isEmpty()) {
+        continue;
       }
-      return true;
+      if (ifLabelTextSameAsParent(field, label, labelText)) {
+        return label;
+      }
+
+      if (comparablePoint(labelPoint, fieldPoint)) {
+        int distance = calculateDist(labelPoint, fieldPoint);
+        int angle = angleBetween2Lines(labelPoint, fieldPoint);
+        if (angleNear90Multiples(angle) && distance < minDist) {
+          goodLabel = label;
+          minDist = distance;
+        }
+      }
+    }
+
+    return goodLabel;
+  }
+  private boolean ifLabelTextSameAsParent(WebElement field, WebElement label, String labelText) {
+    WebElement labelParent = getParent(label);
+    WebElement fieldParent = getParent(field);
+    if (labelParent.equals(fieldParent)) {
+      if (filterText(getLabelTextFor(labelParent)).equals(filterText(labelText))) {
+        return true;
+      }
+    }
+    return false;
+  }
+  private List<WebElement> associateFieldsForLabelWithForAttr(List<WebElement> labelsWithFor) {
+    return labelsWithFor.stream().map(label -> {
+      String id = getAttr(label, "for");
+      WebElement element = this.formDom.findElement(By.id(id));
+      Input inputObj = this.webElementToInput.get(element);
+      setLabel(inputObj, getLabelTextFor(label));
+      return element;
     }).collect(Collectors.toList());
   }
+  private List<WebElement> getLabelsWithFor(List<WebElement> labels) {
+    return labels.stream().filter(label -> {
+      String fieldId = getAttr(label, "for");
+      return fieldId != null;
+    }).collect(Collectors.toList());
+  }
+
+  private List<WebElement> getLabelsWithoutFor(List<WebElement> labels) {
+    return labels.stream().filter(label -> {
+      String fieldId = getAttr(label, "for");
+      return fieldId == null;
+    }).collect(Collectors.toList());
+  }
+
   private List<WebElement> getLabelElements(WebElement formElement) {
     List<WebElement> labelsElements = new ArrayList<>();
-    for(String tagName : LABEL_TAGS){
+    for (String tagName : LABEL_TAGS) {
       labelsElements.addAll(getElementsByTagName(formElement, tagName));
     }
     return labelsElements;
@@ -222,17 +214,7 @@ public class Form {
     }
     return false;
   }
-  private int calculateDist(Point first, Point second) {
-    int xDiff = second.x - first.x;
-    int yDiff = second.y - first.y;
-    int xDiffSq = (int) Math.pow(xDiff, 2);
-    int yDiffSq = (int) Math.pow(yDiff, 2);
-    int sum = xDiffSq + yDiffSq;
-    return (int) Math.sqrt(sum);
-  }
-  public ArrayList<Input> getAssociatedInputs() {
-    return this.form_inputs;
-  }
+
   void submitForm() throws Exception {
     this.resetForm();
     this.fillForm();
@@ -242,10 +224,10 @@ public class Form {
     Thread.sleep(WAIT_FOR_RESULTS);
     this.previousResults = this.domCompare.getResultsDoc(this.driver.getPageSource());
   }
-  public Element getPreviousResults(){
+  public Element getPreviousResults() {
     return this.previousResults;
   }
-  void resetForm(){
+  private void resetForm() {
     String jsScript = "var form = document.querySelectorAll(\"" + this.cssSelector + "\")[0]; form.reset();";
     JavascriptExecutor executor = (JavascriptExecutor) this.driver;
     executor.executeScript(jsScript);
@@ -256,21 +238,20 @@ public class Form {
     }
   }
 
-  private String getCSSSelector(){
+  private String getCSSSelector() {
     String id = getAttr(formDom, "id");
-    if(isValidAttr(id)) {
+    if (isValidAttr(id)) {
       return "#" + id;
-      
     }
     String className = getAttr(formDom, "class");
-    if(isValidAttr(className)) {
+    if (isValidAttr(className)) {
       return "form." + className;
     }
     String action = getAttr(formDom, "action");
-    if(isValidAttr(action)) {
+    if (isValidAttr(action)) {
       return "form[action='" + action + "']";
     }
-    
+
     return "form";
   }
 
@@ -283,9 +264,6 @@ public class Form {
     Record record = suggester.getSuggestedRecord(this);
     filler.fill(record);
     System.out.println("Form filled");
-  }
-  public Input getInputBy(WebElement element) {
-    return this.webElementToInput.get(element);
   }
   public Group getGroupBy(String name) {
     return this.inputGroups.get(name);
@@ -406,12 +384,6 @@ public class Form {
 
     return inp;
   }
-  public Page getAssociatedPage() {
-    return this.page;
-  }
-  WebElement getElement() {
-    return this.formDom;
-  }
   public String toString() {
     return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
   }
@@ -422,13 +394,10 @@ public class Form {
     return new ArrayList<>(this.inputGroups.values());
   }
   public List<Input> getNonGroupableBoundedInputs() {
-    return this.form_inputs.stream().filter(i -> i.isBounded() && !i.isGroupAble()).collect(Collectors.toList());
+    return this.formInputs.stream().filter(i -> i.isBounded() && !i.isGroupAble()).collect(Collectors.toList());
   }
   public List<Input> getUnboundedFields() {
-    return this.form_inputs.stream().filter(i -> !i.isBounded()).collect(Collectors.toList());
-  }
-  public WebDriver getDriver(){
-    return this.driver;
+    return this.formInputs.stream().filter(i -> !i.isBounded()).collect(Collectors.toList());
   }
 }
 
