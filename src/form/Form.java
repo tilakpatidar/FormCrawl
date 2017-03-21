@@ -6,8 +6,10 @@ import form.autofill.fillers.RandomAutoFill;
 import form.autofill.suggesters.RandomSuggester;
 import form.autofill.suggesters.Suggester;
 import form.inputs.*;
+import form.util.DomCompare;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jsoup.nodes.Element;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 
@@ -16,15 +18,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static form.Input.setLabel;
-import static form.util.PointUtil.angleBetween2Lines;
-import static form.util.PointUtil.angleNear90Multiples;
-import static form.util.PointUtil.comparablePoint;
+import static form.util.PointUtil.*;
 import static form.util.SeleniumUtil.*;
 import static form.util.TextUtil.*;
 
 public class Form {
 
-  public static final By RESULTS_DIV = By.id("inner_results_div");
   private static final Class<RandomAutoFill> FILL_CLASS = RandomAutoFill.class;
   private static final Class<RandomSuggester> SUGGESTER_CLASS = RandomSuggester.class;
   private static final String[] LABEL_TAGS = {"label", "span", "td", "div"};
@@ -40,6 +39,8 @@ public class Form {
   private HashMap<WebElement, Input> webElementToInput = new HashMap<>();
   private Button submitButton;
   private final String cssSelector;
+  private final DomCompare domCompare;
+  private Element previousResults;
 
   public Form(Page page, WebElement formDom) throws IllegalAccessException, InstantiationException {
 
@@ -47,6 +48,7 @@ public class Form {
     this.formDom = formDom;
     this.suggester = SUGGESTER_CLASS.newInstance();
     this.driver = this.getAssociatedPage().getDriver();
+    this.domCompare = new DomCompare(this.driver.getPageSource());
     ArrayList<WebElement> input_collection = Form.detectFields(this.formDom);
     this.cssSelector = this.getCSSSelector();
     System.out.printf("CSS selector for the form: %s%n", this.cssSelector);
@@ -166,12 +168,12 @@ public class Form {
           if (angleNear90Multiples(angle) && distance < minDist) {
             goodLabel = label;
             minDist = distance;
-            System.out.printf("accepted %d  %s  |  %s%n", angle, fieldId, labelText);
+//            System.out.printf("accepted %d  %s  |  %s%n", angle, fieldId, labelText);
           } else {
-            System.out.printf("rejected %d  %s  |  %s%n", angle, fieldId, labelText);
+//            System.out.printf("rejected %d  %s  |  %s%n", angle, fieldId, labelText);
           }
         } else {
-          System.out.printf("rejected dist   %s  |  %s%n", fieldId, labelText);
+//          System.out.printf("rejected dist   %s  |  %s%n", fieldId, labelText);
         }
       }
 
@@ -237,23 +239,11 @@ public class Form {
     Button b = this.getSubmitButton();
     b.getWebElement().click();
     System.out.println("Form submitted waiting for results ...");
-    int waitTime = 0;
-    while (true) {
-      try {
-        if(waitTime >= WAIT_FOR_RESULTS){
-          System.out.println("Waiting for results timed out!");
-          break;
-        }
-        if(!driver.findElement(RESULTS_DIV).getText().trim().isEmpty()){
-          System.out.println("Results found!");
-          break;
-        }
-      } catch (NoSuchElementException e) {
-        e.printStackTrace();
-      }
-      Thread.sleep(1000);
-      waitTime += 1000;
-    }
+    Thread.sleep(WAIT_FOR_RESULTS);
+    this.previousResults = this.domCompare.getResultsDoc(this.driver.getPageSource());
+  }
+  public Element getPreviousResults(){
+    return this.previousResults;
   }
   void resetForm(){
     String jsScript = "var form = document.querySelectorAll(\"" + this.cssSelector + "\")[0]; form.reset();";

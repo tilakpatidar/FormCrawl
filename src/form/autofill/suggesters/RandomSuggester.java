@@ -4,9 +4,9 @@ import form.Form;
 import form.Input;
 import form.autofill.data.Record;
 import form.inputs.Group;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
 import java.util.*;
@@ -25,13 +25,10 @@ public class RandomSuggester extends Suggester {
     }
 
     Record record = new Record();
-    WebDriver driver = form.getDriver();
-    try {
-      WebElement resultsDiv = driver.findElement(Form.RESULTS_DIV);
+    Element resultsDiv = form.getPreviousResults();
+    if (resultsDiv != null) {
       populateTokensForUnboundedFields(unboundedFields, resultsDiv);
       System.out.println("Suggestions added for unbounded fields");
-    } catch (NoSuchElementException e) {
-      System.out.println("Results div not found");
     }
     unboundedFields.forEach(field -> {
       try {
@@ -41,41 +38,41 @@ public class RandomSuggester extends Suggester {
       }
     });
 
-      //filling groupable and bounded elements
-      for (Group group : form.getInputGroups()) {
-        if (randomTruth()) {
-          ArrayList<Input> inputs = group.getElements();
-          boolean filled = false;
-          for (Input input : inputs) {
-            if (randomTruth() && !filled) {
-              filled = true;
-              record.put(input, "");
-            }
+    //filling groupable and bounded elements
+    for (Group group : form.getInputGroups()) {
+      if (randomTruth()) {
+        ArrayList<Input> inputs = group.getElements();
+        boolean filled = false;
+        for (Input input : inputs) {
+          if (randomTruth() && !filled) {
+            filled = true;
+            record.put(input, "");
           }
         }
       }
+    }
 
-      //filling non groupable but bounded elements
-      //basically select tags
-      for (Input input : form.getNonGroupableBoundedInputs()) {
-        By option = By.tagName("option");
-        List<WebElement> optionTags = input.getWebElement().findElements(option);
-        Random randomize = new Random();
-        int randomIndex = randomize.nextInt(optionTags.size());
-        WebElement randomOption = optionTags.get(randomIndex);
-        record.put(input, randomOption.getText());
-      }
+    //filling non groupable but bounded elements
+    //basically select tags
+    for (Input input : form.getNonGroupableBoundedInputs()) {
+      By option = By.tagName("option");
+      List<WebElement> optionTags = input.getWebElement().findElements(option);
+      Random randomize = new Random();
+      int randomIndex = randomize.nextInt(optionTags.size());
+      WebElement randomOption = optionTags.get(randomIndex);
+      record.put(input, randomOption.getText());
+    }
     System.out.println(record.toString());
     return record;
   }
-  private void populateTokensForUnboundedFields(List<Input> unboundedFields, WebElement resultsDiv) {
+  private void populateTokensForUnboundedFields(List<Input> unboundedFields, Element resultsDiv) {
     Input titleInput = unboundedFields.get(0);
-    By titleSelector = By.cssSelector(".lister-item-header > a");
-    List<WebElement> titles = resultsDiv.findElements(titleSelector);
+    String titleSelector = ".lister-item-header > a";
+    Elements titles = resultsDiv.select(titleSelector);
     System.out.printf("Titles found %d%n", titles.size());
     Set<String> tokenGrams = new HashSet<>();
     titles.forEach(titleDiv -> {
-      String title = filterText(removePunctuations(titleDiv.getText()));
+      String title = filterText(removePunctuations(titleDiv.text()));
       title = title.toLowerCase();
       System.out.printf("Title: %s%n", title);
       tokenGrams.addAll(ngrams(2, title));

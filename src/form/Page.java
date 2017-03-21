@@ -41,9 +41,8 @@ public final class Page {
     System.out.println("Next iteration (y/n) ?");
     while ((line = sc.nextLine()) != null && line.equals("y")) {
       System.out.println("Starting . . .");
-      for (Form f : this.forms) {
-        f.submitForm();
-      }
+      Form f = this.forms.get(0);
+      f.submitForm();
       System.out.println("Next iteration (y/n) ?");
     }
     System.exit(0);
@@ -60,19 +59,17 @@ public final class Page {
 
     By formTag = By.tagName("form");
     List<WebElement> forms = this.driver.findElements(formTag);
-
-    for (WebElement form : forms) {
-      //checkIfSearchableForm(form);
-      Form f = null;
-      try {
-        f = new Form(this, form);
-      } catch (IllegalAccessException e) {
-        e.printStackTrace();
-      } catch (InstantiationException e) {
-        e.printStackTrace();
-      }
-      this.forms.add(f);
+    WebElement form = forms.get(0);
+    //checkIfSearchableForm(form);
+    Form f = null;
+    try {
+      f = new Form(this, form);
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    } catch (InstantiationException e) {
+      e.printStackTrace();
     }
+    this.forms.add(f);
   }
   private void checkIfSearchableForm(WebElement form) {
     try {
