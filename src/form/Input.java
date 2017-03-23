@@ -1,6 +1,6 @@
 package form;
 
-import org.openqa.selenium.WebElement;
+import form.util.WElement;
 
 import java.io.IOException;
 
@@ -14,9 +14,9 @@ public abstract class Input {
   private String inputTitle;
   private String inputId;
   private final String inputName;
-  protected final WebElement webElement;
+  protected final WElement webElement;
 
-  public Input(Form f, WebElement ip, FIELD_TYPES field_type) throws IOException {
+  public Input(Form f, WElement ip, FIELD_TYPES field_type) throws IOException {
     INPUT_TYPE = field_type;
     form = f;
     webElement = ip;
@@ -32,7 +32,7 @@ public abstract class Input {
     return INPUT_TYPE;
   }
 
-  public WebElement getWebElement() {
+  public WElement getWElement() {
     return webElement;
   }
 

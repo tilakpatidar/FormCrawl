@@ -7,7 +7,7 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.openqa.selenium.WebElement;
+import form.util.WElement;
 
 import java.io.IOException;
 
@@ -18,7 +18,7 @@ import java.io.IOException;
  */
 public class Radio extends Input {
 
-  public Radio(Form f, WebElement ip) throws IOException {
+  public Radio(Form f, WElement ip) throws IOException {
     super(f, ip, FIELD_TYPES.RADIO_INPUT);
   }
 
@@ -37,7 +37,7 @@ public class Radio extends Input {
   }
 
   private void clickRadio() {
-    WebElement e = this.getWebElement();
+    WElement e = this.getWElement();
     e.click();
   }
 }

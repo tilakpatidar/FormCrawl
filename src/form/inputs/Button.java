@@ -7,7 +7,7 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.openqa.selenium.WebElement;
+import form.util.WElement;
 
 import java.io.IOException;
 
@@ -18,7 +18,7 @@ public class Button extends Input {
 
   private Button.TYPES button_type;
 
-  public Button(Form f, WebElement ip) throws IOException {
+  public Button(Form f, WElement ip) throws IOException {
     super(f, ip, FIELD_TYPES.BUTTON_INPUT);
   }
 
@@ -36,7 +36,7 @@ public class Button extends Input {
     return false;
   }
   private void clickButton() {
-    WebElement e = this.getWebElement();
+    WElement e = this.getWElement();
     e.click();
   }
   public Button.TYPES getButtonType() {
@@ -47,7 +47,7 @@ public class Button extends Input {
   }
   public void submit() {
     if (this.button_type.equals(Button.TYPES.SUBMIT)) {
-      this.getWebElement().click();
+      this.getWElement().click();
     } else {
       throw new UnsupportedOperationException("Only SUMBIT type Button can do SUBMIT");
     }

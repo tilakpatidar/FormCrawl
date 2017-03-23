@@ -8,7 +8,8 @@ package form.inputs;
 import form.Form;
 import form.Input;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
+import form.util.WElement;
+import org.openqa.selenium.support.ui.ISelect;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -21,19 +22,17 @@ import java.util.List;
  */
 public class Select extends Input {
 
-  private final org.openqa.selenium.support.ui.Select select_element;
   private final boolean multi_select;
   private final HashMap<String, String> select_values;
 
-  public Select(Form f, WebElement ip) throws IOException {
+  public Select(Form f, WElement ip) throws IOException {
     super(f, ip, FIELD_TYPES.SELECT_INPUT);
-    this.select_element = new org.openqa.selenium.support.ui.Select(this.getWebElement());
     this.multi_select = isMultipleSelect();
     this.select_values = new HashMap();
     this.storeSelectValues();
   }
   private boolean isMultipleSelect() {
-    return this.getWebElement().getAttribute("multiple") != null;
+    return this.getWElement().getAttribute("multiple") != null;
   }
 
   /**
@@ -42,7 +41,12 @@ public class Select extends Input {
    */
   @Override
   public void fill(String s) {
-    this.select_element.selectByVisibleText(s); // TODO using default value in select
+    selectInstance().selectByVisibleText(s); // TODO using default value in 
+    // select
+  }
+  private ISelect selectInstance() {
+    return new org.openqa.selenium.support.ui.Select(this
+        .getWElement().ge());
   }
   @Override
   public boolean isBounded() {
@@ -64,7 +68,7 @@ public class Select extends Input {
       throw new UnsupportedOperationException("Not supported for non multiple select");
     }
     for (String val : vals) {
-      this.select_element.selectByValue(val);
+      selectInstance().selectByValue(val);
     }
   }
 
@@ -74,7 +78,7 @@ public class Select extends Input {
    * @param text
    */
   private void fillByVisibleText(String text) {
-    this.select_element.deselectByVisibleText(text);
+    selectInstance().deselectByVisibleText(text);
   }
 
   /**
@@ -88,7 +92,7 @@ public class Select extends Input {
       throw new UnsupportedOperationException("Not supported for non multiple select");
     }
     for (String text : texts) {
-      this.select_element.deselectByVisibleText(text);
+      selectInstance().deselectByVisibleText(text);
     }
   }
 
@@ -96,9 +100,9 @@ public class Select extends Input {
    * Using select dom creates a HashMap of value and label
    */
   private void storeSelectValues() {
-    WebElement select = this.getWebElement();
-    List<WebElement> options = select.findElements(By.tagName("option"));
-    for (WebElement option : options) {
+    WElement select = this.getWElement();
+    List<WElement> options = select.findElements(By.tagName("option"));
+    for (WElement option : options) {
       this.select_values.put(option.getAttribute("value"), option.getText());
     }
   }

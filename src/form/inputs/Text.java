@@ -7,7 +7,7 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.openqa.selenium.WebElement;
+import form.util.WElement;
 
 import java.io.IOException;
 
@@ -21,9 +21,9 @@ import static form.util.SeleniumUtil.getAttr;
  */
 public class Text extends Input {
 
-  public Text(Form form, WebElement element) throws IOException {
+  public Text(Form form, WElement element) throws IOException {
     super(form, element, TEXT_INPUT);
-    super.placeholder = getAttr(webElement, "placeholder");
+    super.placeholder = getAttr(element, "placeholder");
   }
 
   @Override
@@ -40,7 +40,7 @@ public class Text extends Input {
   }
 
   private void fillText(String value) {
-    WebElement e = this.getWebElement();
+    WElement e = this.getWElement();
     e.click();
     e.clear();
     e.sendKeys(value);

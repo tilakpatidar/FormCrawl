@@ -7,7 +7,7 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.openqa.selenium.WebElement;
+import form.util.WElement;
 
 import java.io.IOException;
 
@@ -18,7 +18,7 @@ import java.io.IOException;
  */
 public class Hidden extends Input {
 
-  public Hidden(Form f, WebElement ip) throws IOException, Exception {
+  public Hidden(Form f, WElement ip) throws IOException, Exception {
     super(f, ip, FIELD_TYPES.HIDDEN_INPUT);
   }
 

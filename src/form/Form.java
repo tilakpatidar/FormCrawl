@@ -7,15 +7,21 @@ import form.autofill.suggesters.RandomSuggester;
 import form.autofill.suggesters.Suggester;
 import form.inputs.*;
 import form.util.DomCompare;
+import form.util.WElement;
 import formcrawl.FormCrawl;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.Point;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static form.Input.setLabel;
@@ -30,17 +36,17 @@ public class Form {
   private static final String[] LABEL_TAGS = {"label", "span", "td", "div"};
   private static final int WAIT_FOR_RESULTS = 20000;
 
-  private final WebElement formDom;
+  private final WElement formDom;
   private final Suggester suggester;
   private ArrayList<Input> formInputs;
   private HashMap<String, Group> inputGroups = new HashMap<>();
-  private HashMap<WebElement, Input> webElementToInput = new HashMap<>();
+  private HashMap<WElement, Input> webElementToInput = new HashMap<>();
   private Button submitButton;
   private final String cssSelector;
   private final DomCompare domCompare;
   private Element previousResults;
 
-  public Form(Page page, WebElement formDom) throws IllegalAccessException, InstantiationException {
+  public Form(Page page, WElement formDom) throws IllegalAccessException, InstantiationException {
 
     this.formDom = formDom;
     this.suggester = SUGGESTER_CLASS.newInstance();
@@ -48,10 +54,10 @@ public class Form {
     this.cssSelector = this.getCSSSelector();
     this.formInputs = new ArrayList<>();
 
-    for (WebElement input : Form.detectFields(this.formDom)) {
+    for (WElement inputDom : Form.detectFields(this.formDom)) {
       try {
-        Input input_obj = this.detectInput(input);
-        webElementToInput.put(input_obj.getWebElement(), input_obj);
+        Input input_obj = this.detectInput(inputDom);
+        webElementToInput.put(inputDom, input_obj);
         this.formInputs.add(input_obj);
         if (input_obj instanceof Button) {
           Button b = (Button) input_obj;
@@ -72,19 +78,19 @@ public class Form {
     }
   }
 
-  private static ArrayList<WebElement> detectFields(WebElement form_dom) {
+  private static ArrayList<WElement> detectFields(WElement form_dom) {
 
-    ArrayList<WebElement> input_collection = new ArrayList<>();
+    ArrayList<WElement> input_collection = new ArrayList<>();
     String[] VALID_INPUT_TAGS = {"input", "textarea", "select", "button"};
     for (String tag : VALID_INPUT_TAGS) {
-      List<WebElement> elements = form_dom.findElements(By.tagName(tag));
+      List<WElement> elements = form_dom.findElements(By.tagName(tag));
       elements = elements.stream().filter(e -> !isHiddenInputElement(e)).collect(Collectors.toList());
       input_collection.addAll(elements);
     }
 
     return input_collection;
   }
-  static String getTextForClassification(WebElement formElement) {
+  static String getTextForClassification(WElement formElement) {
     String pageTitle = FormCrawl.driver.getTitle();
     String formText = formElement.getText();
     By submitButton = By.cssSelector("input[type='submit']");
@@ -117,29 +123,29 @@ public class Form {
   }
   private void associateLabelsAndFields() {
 
-    HashMap<WebElement, Input> cloned = new HashMap<>(webElementToInput);
-    List<WebElement> labelsForThisForm = getLabelElements(this.formDom);
-    List<WebElement> labelsWithoutFor = getLabelsWithoutFor(labelsForThisForm);
-    List<WebElement> labelsWithFor = getLabelsWithFor(labelsForThisForm);
-    List<WebElement> associatedFields = associateFieldsForLabelWithForAttr(labelsWithFor);
+    HashMap<WElement, Input> cloned = new HashMap<>(webElementToInput);
+    List<WElement> labelsForThisForm = getLabelElements(this.formDom);
+    List<WElement> labelsWithoutFor = getLabelsWithoutFor(labelsForThisForm);
+    List<WElement> labelsWithFor = getLabelsWithFor(labelsForThisForm);
+    List<WElement> associatedFields = associateFieldsForLabelWithForAttr(labelsWithFor);
     associatedFields.forEach(cloned::remove);
-    for (Map.Entry<WebElement, Input> pair : cloned.entrySet()) {
-      WebElement field = pair.getKey();
+    for (Map.Entry<WElement, Input> pair : cloned.entrySet()) {
+      WElement field = pair.getKey();
       Input input = pair.getValue();
       if (fieldIsAButton(field, input)) {
         continue;
       }
-      WebElement goodLabel = tryToAssociateFieldWithAnyOf(field, labelsWithoutFor);
+      WElement goodLabel = tryToAssociateFieldWithAnyOf(field, labelsWithoutFor);
       String labelText = goodLabel == null ? "" : getLabelTextFor(goodLabel);
       setLabel(input, labelText);
       labelsWithoutFor.remove(goodLabel);
     }
   }
-  private WebElement tryToAssociateFieldWithAnyOf(WebElement field, List<WebElement> labelsWithoutFor) {
-    WebElement goodLabel = null;
+  private WElement tryToAssociateFieldWithAnyOf(WElement field, List<WElement> labelsWithoutFor) {
+    WElement goodLabel = null;
     int minDist = 99999;
 
-    for (WebElement label : labelsWithoutFor) {
+    for (WElement label : labelsWithoutFor) {
       Point labelPoint = getPointFor(label);
       Point fieldPoint = getPointFor(field);
       String labelText = getLabelTextFor(label);
@@ -162,9 +168,9 @@ public class Form {
 
     return goodLabel;
   }
-  private boolean ifLabelTextSameAsParent(WebElement field, WebElement label, String labelText) {
-    WebElement labelParent = getParent(label);
-    WebElement fieldParent = getParent(field);
+  private boolean ifLabelTextSameAsParent(WElement field, WElement label, String labelText) {
+    WElement labelParent = getParent(label);
+    WElement fieldParent = getParent(field);
     if (labelParent.equals(fieldParent)) {
       if (filterText(getLabelTextFor(labelParent)).equals(filterText(labelText))) {
         return true;
@@ -172,37 +178,37 @@ public class Form {
     }
     return false;
   }
-  private List<WebElement> associateFieldsForLabelWithForAttr(List<WebElement> labelsWithFor) {
+  private List<WElement> associateFieldsForLabelWithForAttr(List<WElement> labelsWithFor) {
     return labelsWithFor.stream().map(label -> {
       String id = getAttr(label, "for");
-      WebElement element = this.formDom.findElement(By.id(id));
+      WElement element = this.formDom.findElement(By.id(id));
       Input inputObj = this.webElementToInput.get(element);
       setLabel(inputObj, getLabelTextFor(label));
       return element;
     }).collect(Collectors.toList());
   }
-  private List<WebElement> getLabelsWithFor(List<WebElement> labels) {
+  private List<WElement> getLabelsWithFor(List<WElement> labels) {
     return labels.stream().filter(label -> {
       String fieldId = getAttr(label, "for");
       return fieldId != null;
     }).collect(Collectors.toList());
   }
 
-  private List<WebElement> getLabelsWithoutFor(List<WebElement> labels) {
+  private List<WElement> getLabelsWithoutFor(List<WElement> labels) {
     return labels.stream().filter(label -> {
       String fieldId = getAttr(label, "for");
       return fieldId == null;
     }).collect(Collectors.toList());
   }
 
-  private List<WebElement> getLabelElements(WebElement formElement) {
-    List<WebElement> labelsElements = new ArrayList<>();
+  private List<WElement> getLabelElements(WElement formElement) {
+    List<WElement> labelsElements = new ArrayList<>();
     for (String tagName : LABEL_TAGS) {
       labelsElements.addAll(getElementsByTagName(formElement, tagName));
     }
     return labelsElements;
   }
-  private boolean fieldIsAButton(WebElement field, Input input) {
+  private boolean fieldIsAButton(WElement field, Input input) {
     if (isFieldButton(field)) {
       setLabel(input, getLabelTextFor(field));
       return true;
@@ -218,7 +224,7 @@ public class Form {
     this.resetForm();
     this.fillForm();
     Button b = this.getSubmitButton();
-    b.getWebElement().click();
+    b.getWElement().click();
     System.out.println("Form submitted waiting for results ...");
     Thread.sleep(WAIT_FOR_RESULTS);
     this.previousResults = this.domCompare.getResultsDoc(FormCrawl.driver.getPageSource());
@@ -267,7 +273,7 @@ public class Form {
   public Group getGroupBy(String name) {
     return this.inputGroups.get(name);
   }
-  private Input detectInput(WebElement ip) throws IOException {
+  private Input detectInput(WElement ip) throws IOException {
     String tag_name = ip.getTagName();
     Input inp;
     Button bt;

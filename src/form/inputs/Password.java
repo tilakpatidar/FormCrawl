@@ -7,9 +7,11 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.openqa.selenium.WebElement;
+import form.util.WElement;
 
 import java.io.IOException;
+
+import static form.util.SeleniumUtil.getAttr;
 
 /**
  * Password input implementation
@@ -18,8 +20,9 @@ import java.io.IOException;
  */
 public class Password extends Input {
 
-  public Password(Form f, WebElement ip) throws IOException {
+  public Password(Form f, WElement ip) throws IOException {
     super(f, ip, FIELD_TYPES.PASSWORD_INPUT);
+    super.placeholder = getAttr(ip, "placeholder");
   }
 
   @Override
@@ -36,7 +39,7 @@ public class Password extends Input {
   }
 
   private void fillText(String value) {
-    WebElement e = this.getWebElement();
+    WElement e = this.getWElement();
     e.sendKeys(value);
   }
 }

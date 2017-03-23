@@ -2,16 +2,15 @@ package form;
 
 import form.ml.LRClassifier;
 import form.util.SeleniumUtil;
+import form.util.WElement;
 import formcrawl.FormCrawl;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 import javax.swing.*;
 import java.net.URL;
-import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -57,19 +56,18 @@ public final class Page {
   private Form findForm() {
 
     By formTag = By.tagName("form");
-    List<WebElement> forms = FormCrawl.driver.findElements(formTag);
-    WebElement form = forms.get(0);
-    quitAppIfNotSearchable(form);
+    WElement fdom = new WElement(FormCrawl.driver.findElement(formTag));
+    quitAppIfNotSearchable(fdom);
     Form f = null;
     try {
-      f = new Form(this, form);
+      f = new Form(this, fdom);
     } catch (IllegalAccessException | InstantiationException e) {
       e.printStackTrace();
     }
     System.out.println("All forms parsed");
     return f;
   }
-  private void quitAppIfNotSearchable(WebElement form) {
+  private void quitAppIfNotSearchable(WElement form) {
     try {
       String formText = Form.getTextForClassification(form);
       LRClassifier classifier = new LRClassifier();

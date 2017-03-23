@@ -4,9 +4,9 @@ import form.Form;
 import form.Input;
 import form.autofill.data.Record;
 import form.inputs.Group;
+import form.util.WElement;
 import org.jsoup.nodes.Element;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 
 import java.util.*;
 
@@ -55,10 +55,10 @@ public class RandomSuggester extends Suggester {
     //basically select tags
     for (Input input : form.getNonGroupableBoundedInputs()) {
       By option = By.tagName("option");
-      List<WebElement> optionTags = input.getWebElement().findElements(option);
+      List<WElement> optionTags = input.getWElement().findElements(option);
       Random randomize = new Random();
       int randomIndex = randomize.nextInt(optionTags.size());
-      WebElement randomOption = optionTags.get(randomIndex);
+      WElement randomOption = optionTags.get(randomIndex);
       record.put(input, randomOption.getText());
     }
     System.out.println(record.toString());

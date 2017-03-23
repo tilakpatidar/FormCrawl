@@ -2,7 +2,7 @@ package form.inputs;
 
 import form.Form;
 import form.Input;
-import org.openqa.selenium.WebElement;
+import form.util.WElement;
 
 import java.io.IOException;
 
@@ -13,7 +13,7 @@ public abstract class Groupable extends Input {
 
   private String groupClassName;
 
-  public Groupable(Form f, WebElement ip, FIELD_TYPES type) throws IOException {
+  public Groupable(Form f, WElement ip, FIELD_TYPES type) throws IOException {
     super(f, ip, type);
 
     //now create the group
