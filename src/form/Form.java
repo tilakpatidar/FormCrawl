@@ -35,7 +35,7 @@ public class Form {
   private static final Class<RandomAutoFill> FILL_CLASS = RandomAutoFill.class;
   private static final Class<RandomSuggester> SUGGESTER_CLASS = RandomSuggester.class;
   private static final String[] LABEL_TAGS = {"label", "span", "td", "div"};
-  private static final int WAIT_FOR_RESULTS = 20000;
+  private static final int WAIT_FOR_RESULTS = 10000;
 
   private final WElement formDom;
   private final Suggester suggester;
@@ -47,6 +47,10 @@ public class Form {
   private final DomCompare domCompare;
   private Element previousResults;
   private final Document soup;
+  private final List<WElement> labelsElements = new ArrayList<>();
+  private final List<WElement> labelsWithoutFor = new ArrayList<>();
+
+  private final List<WElement> associatedFields = new ArrayList<>();
 
   public Form(Page page, WElement formDom, Document soup) throws
       IllegalAccessException,
@@ -127,13 +131,8 @@ public class Form {
     return removeMultipleSpaces(tokenStr);
   }
   private void associateLabelsAndFields() {
+    HashMap<WElement, Input> cloned = buildRequiredLabelLists();
 
-    HashMap<WElement, Input> cloned = new HashMap<>(webElementToInput);
-    List<WElement> labelsForThisForm = getLabelElements(this.formDom);
-    List<WElement> labelsWithoutFor = getLabelsWithoutFor(labelsForThisForm);
-    List<WElement> labelsWithFor = getLabelsWithFor(labelsForThisForm);
-    List<WElement> associatedFields = associateFieldsForLabelWithForAttr(labelsWithFor);
-    associatedFields.forEach(cloned::remove);
     for (Map.Entry<WElement, Input> pair : cloned.entrySet()) {
       WElement field = pair.getKey();
       Input input = pair.getValue();
@@ -145,6 +144,29 @@ public class Form {
       setLabel(input, labelText);
       labelsWithoutFor.remove(goodLabel);
     }
+  }
+  private HashMap<WElement, Input> buildRequiredLabelLists() {
+    HashMap<WElement, Input> cloned = new HashMap<>(webElementToInput);
+    //search for label tags
+    for (String tagName : LABEL_TAGS) {
+      labelsElements.addAll(getElementsByTagName(this.formDom, tagName));
+    }
+
+    //filter labels without for
+    //filter labels with for
+    labelsElements.forEach(label -> {
+      String fieldId = getAttr(label, "for");
+      if (fieldId == null) {
+        labelsWithoutFor.add(label);
+      } else {
+        WElement element = this.formDom.findElement(By.id(fieldId));
+        Input inputObj = this.webElementToInput.get(element);
+        setLabel(inputObj, getLabelTextFor(label));
+        associatedFields.add(element);
+      }
+    });
+    associatedFields.forEach(cloned::remove);
+    return cloned;
   }
   private WElement tryToAssociateFieldWithAnyOf(WElement field, List<WElement> labelsWithoutFor) {
     WElement goodLabel = null;
@@ -183,36 +205,7 @@ public class Form {
     }
     return false;
   }
-  private List<WElement> associateFieldsForLabelWithForAttr(List<WElement> labelsWithFor) {
-    return labelsWithFor.stream().map(label -> {
-      String id = getAttr(label, "for");
-      WElement element = this.formDom.findElement(By.id(id));
-      Input inputObj = this.webElementToInput.get(element);
-      setLabel(inputObj, getLabelTextFor(label));
-      return element;
-    }).collect(Collectors.toList());
-  }
-  private List<WElement> getLabelsWithFor(List<WElement> labels) {
-    return labels.stream().filter(label -> {
-      String fieldId = getAttr(label, "for");
-      return fieldId != null;
-    }).collect(Collectors.toList());
-  }
 
-  private List<WElement> getLabelsWithoutFor(List<WElement> labels) {
-    return labels.stream().filter(label -> {
-      String fieldId = getAttr(label, "for");
-      return fieldId == null;
-    }).collect(Collectors.toList());
-  }
-
-  private List<WElement> getLabelElements(WElement formElement) {
-    List<WElement> labelsElements = new ArrayList<>();
-    for (String tagName : LABEL_TAGS) {
-      labelsElements.addAll(getElementsByTagName(formElement, tagName));
-    }
-    return labelsElements;
-  }
   private boolean fieldIsAButton(WElement field, Input input) {
     if (isFieldButton(field)) {
       setLabel(input, getLabelTextFor(field));
@@ -241,11 +234,6 @@ public class Form {
     String jsScript = "var form = document.querySelectorAll(\"" + this.cssSelector + "\")[0]; form.reset();";
     JavascriptExecutor executor = (JavascriptExecutor) FormCrawl.driver;
     executor.executeScript(jsScript);
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      System.out.println("Exception in wait for js to execute");
-    }
   }
 
   private String getCSSSelector() {

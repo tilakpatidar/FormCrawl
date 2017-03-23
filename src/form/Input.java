@@ -14,7 +14,7 @@ public abstract class Input {
   private String inputTitle;
   private String inputId;
   private final String inputName;
-  protected final WElement webElement;
+  private final WElement webElement;
 
   public Input(Form f, WElement ip, FIELD_TYPES field_type) throws IOException {
     INPUT_TYPE = field_type;
