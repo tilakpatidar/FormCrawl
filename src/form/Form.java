@@ -7,6 +7,7 @@ import form.autofill.suggesters.RandomSuggester;
 import form.autofill.suggesters.Suggester;
 import form.inputs.*;
 import form.util.DomCompare;
+import formcrawl.FormCrawl;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jsoup.nodes.Element;
@@ -31,7 +32,6 @@ public class Form {
 
   private final WebElement formDom;
   private final Suggester suggester;
-  private final WebDriver driver;
   private ArrayList<Input> formInputs;
   private HashMap<String, Group> inputGroups = new HashMap<>();
   private HashMap<WebElement, Input> webElementToInput = new HashMap<>();
@@ -44,8 +44,7 @@ public class Form {
 
     this.formDom = formDom;
     this.suggester = SUGGESTER_CLASS.newInstance();
-    this.driver = page.getDriver();
-    this.domCompare = new DomCompare(this.driver.getPageSource());
+    this.domCompare = new DomCompare(FormCrawl.driver.getPageSource());
     this.cssSelector = this.getCSSSelector();
     this.formInputs = new ArrayList<>();
 
@@ -85,8 +84,8 @@ public class Form {
 
     return input_collection;
   }
-  static String getTextForClassification(WebElement formElement, Page page) {
-    String pageTitle = page.getDriver().getTitle();
+  static String getTextForClassification(WebElement formElement) {
+    String pageTitle = FormCrawl.driver.getTitle();
     String formText = formElement.getText();
     By submitButton = By.cssSelector("input[type='submit']");
     By submitButton2 = By.cssSelector("button[type='submit']");
@@ -222,14 +221,14 @@ public class Form {
     b.getWebElement().click();
     System.out.println("Form submitted waiting for results ...");
     Thread.sleep(WAIT_FOR_RESULTS);
-    this.previousResults = this.domCompare.getResultsDoc(this.driver.getPageSource());
+    this.previousResults = this.domCompare.getResultsDoc(FormCrawl.driver.getPageSource());
   }
   public Element getPreviousResults() {
     return this.previousResults;
   }
   private void resetForm() {
     String jsScript = "var form = document.querySelectorAll(\"" + this.cssSelector + "\")[0]; form.reset();";
-    JavascriptExecutor executor = (JavascriptExecutor) this.driver;
+    JavascriptExecutor executor = (JavascriptExecutor) FormCrawl.driver;
     executor.executeScript(jsScript);
     try {
       Thread.sleep(2000);

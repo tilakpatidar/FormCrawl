@@ -5,11 +5,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.openqa.selenium.WebDriver;
 
-import java.util.ArrayList;
-
 public class FormCrawl extends javax.swing.JFrame {
 
-  public static ArrayList<WebDriver> drivers = new ArrayList<>();
+  public static WebDriver driver;
   private javax.swing.JTextArea LoggerTextArea;
   private javax.swing.JTextField URLField;
   private javax.swing.JButton jButton1;
@@ -140,13 +138,11 @@ public class FormCrawl extends javax.swing.JFrame {
     }
   }
   private void closingWindow(java.awt.event.WindowEvent evt) {
-    for (WebDriver driver : FormCrawl.drivers) {
 
-      try {
-        driver.quit();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+    try {
+      FormCrawl.driver.quit();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
   public String toString() {
