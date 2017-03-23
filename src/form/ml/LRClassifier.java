@@ -2,7 +2,9 @@ package form.ml;
 
 import weka.classifiers.functions.Logistic;
 
-public class LRClassifier extends ClassifierTemplate {
+import java.io.*;
+
+public class LRClassifier extends ClassifierTemplate implements Serializable {
 
   private final static String DATA_SET_PATH = "./corpus/labeled_forms.arff";
   private final static String STOP_WORD_PATH = "./corpus/stopwords_en.txt";
@@ -16,6 +18,25 @@ public class LRClassifier extends ClassifierTemplate {
 
   public static void main(String[] args) throws Exception {
     LRClassifier classifier = new LRClassifier();
-    System.out.println(classifier.classifyLabel("create account"));
+    //    System.out.println(classifier.classifyLabel("create account"));
+    ObjectOutputStream oos = new ObjectOutputStream(
+        new FileOutputStream("./form_classifier.model"));
+    oos.writeObject(classifier);
+    oos.flush();
+    oos.close();
+  }
+  public static LRClassifier load(){
+    ObjectInputStream ois;
+    try {
+      ois = new ObjectInputStream(
+          new FileInputStream("./form_classifier.model"));
+      LRClassifier cls = (LRClassifier) ois.readObject();
+      ois.close();
+      return cls;
+    } catch (IOException | ClassNotFoundException e) {
+      e.printStackTrace();
+    }
+    return null;
+
   }
 }

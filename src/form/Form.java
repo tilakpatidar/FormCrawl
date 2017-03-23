@@ -46,7 +46,7 @@ public class Form {
   private final DomCompare domCompare;
   private Element previousResults;
 
-  public Form(Page page, WElement formDom) throws IllegalAccessException, InstantiationException {
+  public Form(WElement formDom) throws IllegalAccessException, InstantiationException {
 
     this.formDom = formDom;
     this.suggester = SUGGESTER_CLASS.newInstance();

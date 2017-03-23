@@ -20,6 +20,7 @@ public final class Page {
   private static final String CHROME_DRIVER_PATH = "/Users/ptilak/bin/chromedriver";
   private static final String NOT_SEARCHABLE_MSG = "Form is not a searchable";
   private final URL pageUrl;
+  private static LRClassifier classifier = LRClassifier.load();
 
   static {
     System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
@@ -49,7 +50,7 @@ public final class Page {
   private void loadSeleniumDriver() {
     FormCrawl.driver = new ChromeDriver();
     FormCrawl.driver.get(this.pageUrl.toString());
-    FormCrawl.driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+    FormCrawl.driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
     System.out.println("Selenium driver loaded");
   }
 
@@ -60,7 +61,7 @@ public final class Page {
     quitAppIfNotSearchable(fdom);
     Form f = null;
     try {
-      f = new Form(this, fdom);
+      f = new Form(fdom);
     } catch (IllegalAccessException | InstantiationException e) {
       e.printStackTrace();
     }
@@ -70,9 +71,9 @@ public final class Page {
   private void quitAppIfNotSearchable(WElement form) {
     try {
       String formText = Form.getTextForClassification(form);
-      LRClassifier classifier = new LRClassifier();
+
       String classifiedFormLabel = classifier.classifyLabel(formText);
-      if (!classifiedFormLabel.equals(SEARCHABLE_FORM_LABEL)) {
+      if (classifiedFormLabel.equals(SEARCHABLE_FORM_LABEL)) {
         JOptionPane.showMessageDialog(null, NOT_SEARCHABLE_MSG);
         System.exit(0);
       }

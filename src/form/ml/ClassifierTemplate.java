@@ -6,8 +6,6 @@
 package form.ml;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.Evaluation;
-import weka.classifiers.bayes.NaiveBayes;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -23,7 +21,7 @@ import java.io.*;
  *
  * @author tilak
  */
-public class ClassifierTemplate {
+public class ClassifierTemplate implements Serializable {
 
   /**
    * Instances object to handle the dataset content
@@ -40,7 +38,7 @@ public class ClassifierTemplate {
   /**
    * Evaluation object to evaluate the current classifier
    */
-  private Evaluation evaluation;
+//  private Evaluation evaluation;
   /**
    * the weka TF*IDF vector generator
    */
@@ -70,7 +68,7 @@ public class ClassifierTemplate {
    * @throws IOException
    * @throws Exception
    */
-  public ClassifierTemplate(String data_set_path, String stop_words_path, int class_index) throws FileNotFoundException, IOException, Exception {
+  public ClassifierTemplate(String data_set_path, String stop_words_path, int class_index) throws Exception {
 
     /**
      * loading the arff file content
@@ -149,20 +147,14 @@ public class ClassifierTemplate {
     /**
      * Initialize the evaluation by the training data (test)
      */
-    evaluation = new Evaluation(trainFiltered);
+//    evaluation = new Evaluation(trainFiltered);
     /**
      * evaluate the current classifier
      */
-    evaluation.evaluateModel(classifier, trainFiltered);
-    System.out.println(evaluation.toSummaryString());
+//    evaluation.evaluateModel(classifier, trainFiltered);
+//    System.out.println(evaluation.toSummaryString());
   }
 
-  public static void main(String[] args) throws Exception {
-    ClassifierTemplate bs = new ClassifierTemplate("./corpus/inputs.arff", "./corpus/stopwords_en.txt", 0);
-    bs.setClassifier(new NaiveBayes());
-    bs.train();
-    System.out.println(bs.classifyLabel("please enter your password"));
-  }
   protected void setClassifier(Classifier classifier) {
     this.classifier = classifier;
   }
