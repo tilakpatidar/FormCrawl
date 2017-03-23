@@ -14,7 +14,8 @@ public final class SeleniumUtil {
   private static HashMap<String, HashMap<WElement, String>> attrStore = new
       HashMap<>();
   public static List<String> getTextOf(WElement formElement, By selector) {
-    return formElement.findElements(selector).stream().map((e) -> e.getText()).collect(Collectors.toList());
+    return formElement.findElements(selector).stream().map((e) -> e.getText()
+    + " ").collect(Collectors.toList());
   }
 
   public static List<String> getElementByAttr(WElement formElement, String cssSelector) {

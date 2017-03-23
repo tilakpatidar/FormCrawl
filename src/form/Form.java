@@ -11,6 +11,7 @@ import form.util.WElement;
 import formcrawl.FormCrawl;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -45,12 +46,16 @@ public class Form {
   private final String cssSelector;
   private final DomCompare domCompare;
   private Element previousResults;
+  private final Document soup;
 
-  public Form(WElement formDom) throws IllegalAccessException, InstantiationException {
+  public Form(Page page, WElement formDom, Document soup) throws
+      IllegalAccessException,
+      InstantiationException {
 
     this.formDom = formDom;
+    this.soup = soup;
     this.suggester = SUGGESTER_CLASS.newInstance();
-    this.domCompare = new DomCompare(FormCrawl.driver.getPageSource());
+    this.domCompare = new DomCompare(page.getSource());
     this.cssSelector = this.getCSSSelector();
     this.formInputs = new ArrayList<>();
 
@@ -90,30 +95,30 @@ public class Form {
 
     return input_collection;
   }
-  static String getTextForClassification(WElement formElement) {
+  static String getTextForClassification(Document formElement) {
     String pageTitle = FormCrawl.driver.getTitle();
-    String formText = formElement.getText();
-    By submitButton = By.cssSelector("input[type='submit']");
-    By submitButton2 = By.cssSelector("button[type='submit']");
-    List<String> placeHolders = getElementByAttr(formElement, "placeholder");
-    List<String> names = getElementByAttr(formElement, "name");
+    String formText = formElement.text();
+    String submitButton = "input[type='submit']";
+    String submitButton2 = "button[type='submit']";
+    String placeHolders = formElement.getElementsByAttribute("placeholder").text();
+    String names = formElement.getElementsByAttribute("name").text();
     String btn_text;
     String btn_text2;
     try {
-      btn_text = formElement.findElement(submitButton).getAttribute("value");
+      btn_text = formElement.select(submitButton).attr("value");
     } catch (NoSuchElementException e) {
       btn_text = "";
     }
 
     try {
-      btn_text2 = formElement.findElement(submitButton2).getText();
+      btn_text2 = formElement.select(submitButton2).text();
     } catch (NoSuchElementException e) {
       btn_text2 = "";
     }
 
-    List<String> labelText = getTextOf(formElement, By.cssSelector("label"));
+    String labelText = formElement.getElementsByTag("label").text();
 
-    String text = String.format("%s %s %s %s %s %s %s", pageTitle, formText, concatList(placeHolders, " "), concatList(names, " "), btn_text, btn_text2, concatList(labelText, " "));
+    String text = String.format("%s %s %s %s %s %s %s", pageTitle, formText, placeHolders, names, btn_text, btn_text2, labelText);
 
     String camelCaseStr = removePunctuations(filterText(text)).toLowerCase();
 

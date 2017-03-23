@@ -6,6 +6,8 @@ import form.util.WElement;
 import formcrawl.FormCrawl;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -28,10 +30,15 @@ public final class Page {
   }
 
   private final Form form;
+  private final String source;
+  private final Document soup;
 
   public Page(String pageUrl) throws Exception {
     this.pageUrl = new URL(pageUrl);
     this.loadSeleniumDriver();
+    String pageSource = FormCrawl.driver.getPageSource();
+    this.soup = Jsoup.parse(pageSource);
+    this.source = pageSource;
     this.form = findForm();
     promptForNextCrawlIteration();
   }
@@ -58,22 +65,22 @@ public final class Page {
 
     By formTag = By.tagName("form");
     WElement fdom = new WElement(FormCrawl.driver.findElement(formTag));
-    quitAppIfNotSearchable(fdom);
+    Document formSoup = Jsoup.parse(fdom.toString());
+    quitAppIfNotSearchable(formSoup);
     Form f = null;
     try {
-      f = new Form(fdom);
+      f = new Form(this, fdom, formSoup);
     } catch (IllegalAccessException | InstantiationException e) {
       e.printStackTrace();
     }
     System.out.println("All forms parsed");
     return f;
   }
-  private void quitAppIfNotSearchable(WElement form) {
+  private void quitAppIfNotSearchable(Document formSoup) {
     try {
-      String formText = Form.getTextForClassification(form);
-
+      String formText = Form.getTextForClassification(formSoup);
       String classifiedFormLabel = classifier.classifyLabel(formText);
-      if (classifiedFormLabel.equals(SEARCHABLE_FORM_LABEL)) {
+      if (!classifiedFormLabel.equals(SEARCHABLE_FORM_LABEL)) {
         JOptionPane.showMessageDialog(null, NOT_SEARCHABLE_MSG);
         System.exit(0);
       }
@@ -85,5 +92,8 @@ public final class Page {
 
   public String toString() {
     return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+  }
+  public String getSource() {
+    return source;
   }
 }
