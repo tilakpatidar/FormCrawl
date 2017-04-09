@@ -62,7 +62,11 @@ public class WElement {
     return this.ge().getLocation();
   }
   public WElement findElement(By xpath) {
-    return new WElement(this.ge().findElement(xpath));
+    try{
+      return new WElement(this.ge().findElement(xpath));
+    }catch (NoSuchElementException e){
+      return null;
+    }
   }
   public void click() {
     this.ge().click();
@@ -89,5 +93,8 @@ public class WElement {
     int result = cssSelector != null ? cssSelector.hashCode() : 0;
     result = 31 * result + (element != null ? element.hashCode() : 0);
     return result;
+  }
+  public String getCssSelector() {
+    return cssSelector;
   }
 }

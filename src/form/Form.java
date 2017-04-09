@@ -160,9 +160,13 @@ public class Form {
         labelsWithoutFor.add(label);
       } else {
         WElement element = this.formDom.findElement(By.id(fieldId));
-        Input inputObj = this.webElementToInput.get(element);
-        setLabel(inputObj, getLabelTextFor(label));
-        associatedFields.add(element);
+        if(element != null){
+          Input inputObj = this.webElementToInput.get(element);
+          setLabel(inputObj, getLabelTextFor(label));
+          associatedFields.add(element);
+        }else{
+          labelsWithoutFor.add(label);
+        }
       }
     });
     associatedFields.forEach(cloned::remove);
@@ -237,20 +241,7 @@ public class Form {
   }
 
   private String getCSSSelector() {
-    String id = getAttr(formDom, "id");
-    if (isValidAttr(id)) {
-      return "#" + id;
-    }
-    String className = getAttr(formDom, "class");
-    if (isValidAttr(className)) {
-      return "form." + className;
-    }
-    String action = getAttr(formDom, "action");
-    if (isValidAttr(action)) {
-      return "form[action='" + action + "']";
-    }
-
-    return "form";
+    return formDom.getCssSelector();
   }
 
   private Button getSubmitButton() {

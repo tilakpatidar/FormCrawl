@@ -14,3 +14,4 @@ screenshots/
 *.lock
 default_log.html*
 *.pyc
+out/
