@@ -117,6 +117,7 @@ public final class DomCompare {
   }
 
   private static Document filterDOM(String html) {
+    html = html.replaceAll("<", " <");
     Document doc = Jsoup.parse(html);
     for (String tag : REMOVED_TAGS) {
       doc.getElementsByTag(tag).forEach(e -> e.remove());

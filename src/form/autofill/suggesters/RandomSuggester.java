@@ -9,6 +9,7 @@ import org.jsoup.nodes.Element;
 import org.openqa.selenium.By;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static form.util.TextUtil.*;
 
@@ -68,7 +69,9 @@ public class RandomSuggester extends Suggester {
     Input titleInput = unboundedFields.get(0);
     Set<String> tokenGrams = new HashSet<>();
     String title = filterText(removePunctuations(resultsDiv.text()));
-    title = title.toLowerCase();
+    String[] tokens = title.split(" ");
+    List<String> stringList = Arrays.stream(tokens).filter(e -> e.length() < 20).collect(Collectors.toList());
+    title = concatList(stringList, " ").toLowerCase();
     System.out.printf("Title: %s%n", title);
     tokenGrams.addAll(ngrams(2, title));
     List<String> trigrams = ngrams(3, title);
