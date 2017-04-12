@@ -388,5 +388,8 @@ public class Form {
   public List<Input> getUnboundedFields() {
     return this.formInputs.stream().filter(i -> !i.isBounded()).collect(Collectors.toList());
   }
+  public List<Input> getBoundedFields() {
+    return this.formInputs.stream().filter(i -> i.isBounded()).collect(Collectors.toList());
+  }
 }
 

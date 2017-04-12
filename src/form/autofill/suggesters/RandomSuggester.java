@@ -3,7 +3,6 @@ package form.autofill.suggesters;
 import form.Form;
 import form.Input;
 import form.autofill.data.Record;
-import form.inputs.Group;
 import form.util.WElement;
 import org.jsoup.nodes.Element;
 import org.openqa.selenium.By;
@@ -22,6 +21,7 @@ public class RandomSuggester extends Suggester {
     if (suggestionTokens.isEmpty()) {
       //init with unbounded elements
       unboundedFields.forEach(field -> suggestionTokens.put(field, new ArrayList<>()));
+      return new Record(); //first time try empty search
     }
 
     Record record = new Record();
@@ -39,19 +39,17 @@ public class RandomSuggester extends Suggester {
     });
 
     //filling groupable and bounded elements
-    for (Group group : form.getInputGroups()) {
-      if (randomTruth()) {
-        ArrayList<Input> inputs = group.getElements();
-        boolean filled = false;
-        for (Input input : inputs) {
-          if (randomTruth() && !filled) {
-            filled = true;
-            record.put(input, "");
-          }
-        }
-      }
-    }
+    form.getInputGroups().forEach(group -> {
+      Random random = new
+      group.getElements().get();
+    });
 
+    fillSelectFields(form, record);
+
+    System.out.println(record.toString());
+    return record;
+  }
+  private void fillSelectFields(Form form, Record record) {
     //filling non groupAble but bounded elements
     //basically select tags
     for (Input input : form.getNonGroupableBoundedInputs()) {
@@ -62,16 +60,12 @@ public class RandomSuggester extends Suggester {
       WElement randomOption = optionTags.get(randomIndex);
       record.put(input, randomOption.getText());
     }
-    System.out.println(record.toString());
-    return record;
   }
+
   private void populateTokensForUnboundedFields(List<Input> unboundedFields, Element resultsDiv) {
     Input titleInput = unboundedFields.get(0);
     Set<String> tokenGrams = new HashSet<>();
-    String title = filterText(removePunctuations(resultsDiv.text()));
-    String[] tokens = title.split(" ");
-    List<String> stringList = Arrays.stream(tokens).filter(e -> e.length() < 20).collect(Collectors.toList());
-    title = concatList(stringList, " ").toLowerCase();
+    String title = filterResultsDiv(resultsDiv);
     System.out.printf("Title: %s%n", title);
     tokenGrams.addAll(ngrams(2, title));
     List<String> trigrams = ngrams(3, title);
@@ -79,6 +73,12 @@ public class RandomSuggester extends Suggester {
     tokenGrams.add(title);
     this.suggestionTokens.get(titleInput).addAll(tokenGrams);
     System.out.printf("BiGrams generated : %d%n", tokenGrams.size());
+  }
+  private String filterResultsDiv(Element resultsDiv) {
+    String title = filterText(removePunctuations(resultsDiv.text()));
+    String[] tokens = title.split(" ");
+    List<String> stringList = Arrays.stream(tokens).filter(e -> e.length() < 20).collect(Collectors.toList());
+    return concatList(stringList, " ").toLowerCase();
   }
 
   private boolean randomTruth() {

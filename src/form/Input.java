@@ -1,5 +1,7 @@
 package form;
 
+import form.autofill.data.DomainAttribute;
+import form.ml.AttributeClassifier;
 import form.util.WElement;
 
 import java.io.IOException;
@@ -15,6 +17,8 @@ public abstract class Input {
   private String inputId;
   private final String inputName;
   private final WElement webElement;
+  private DomainAttribute domainAttribute;
+  private static AttributeClassifier attributeClassifier = AttributeClassifier.load();
 
   public Input(Form f, WElement ip, FIELD_TYPES field_type) throws IOException {
     INPUT_TYPE = field_type;
@@ -42,7 +46,7 @@ public abstract class Input {
 
   @Override
   public String toString() {
-    return String.format("Name:  %s | Id:   %s |   LabelText:  %s%n", this.getInputName(), this.getInputId(), this.getInputTitle());
+    return String.format("Name:  %s | Id:   %s |   LabelText:  %s | domain attribute: %s%n", this.getInputName(), this.getInputId(), this.getInputTitle(), this.getDomainAttribute());
   }
 
   private void setInputTitle(String input_title) {
@@ -59,10 +63,18 @@ public abstract class Input {
   }
   static void setLabel(Input input, String labelText) {
     input.setInputTitle(labelText);
+    DomainAttribute domainAttribute = attributeClassifier.domainAttribute(labelText);
+    input.setDomainAttribute(domainAttribute);
     input.printFieldLabelAssociation();
   }
   public String getTitle() {
     return inputTitle;
+  }
+  public DomainAttribute getDomainAttribute() {
+    return this.domainAttribute;
+  }
+  public void setDomainAttribute(DomainAttribute domainAttribute) {
+    this.domainAttribute = domainAttribute;
   }
 
   public enum FIELD_TYPES {
