@@ -40,8 +40,13 @@ public class RandomSuggester extends Suggester {
 
     //filling groupable and bounded elements
     form.getInputGroups().forEach(group -> {
-      Random random = new
-      group.getElements().get();
+      final boolean[] filled = {false};
+      group.getElements().forEach(input -> {
+        if(randomTruth() && !filled[0]){
+          record.put(input, "");
+          filled[0] = true;
+        }
+      });
     });
 
     fillSelectFields(form, record);
