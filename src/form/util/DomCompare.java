@@ -125,7 +125,7 @@ public final class DomCompare {
     return doc;
   }
 
-  private static String readFile(String path) {
+  public static String readFile(String path) {
     File file = new File(path);
     try {
       FileReader reader = new FileReader(file);
@@ -147,6 +147,8 @@ public final class DomCompare {
     String results = readFile("/Users/ptilak/test/results1.html");
     DomCompare compare = new DomCompare(orig);
     Element resultDoc = compare.getResultsDoc(results);
+    Elements docs = DocExtractor.extractDocs(resultDoc);
     System.out.println(resultDoc.html());
+    docs.forEach(d -> System.out.println("########" + "\n" + d.toString() + "\n"));
   }
 }

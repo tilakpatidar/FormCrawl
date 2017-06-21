@@ -73,6 +73,7 @@ public final class Page {
     } catch (IllegalAccessException | InstantiationException e) {
       e.printStackTrace();
     }
+
     System.out.println("All forms parsed");
     return f;
   }
@@ -84,6 +85,7 @@ public final class Page {
         JOptionPane.showMessageDialog(null, NOT_SEARCHABLE_MSG);
         System.exit(0);
       }
+      System.out.println("Form detected is a searchable form");
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(0);
